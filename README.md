@@ -90,7 +90,7 @@ pip install workcell
 
 5. **Deploy workcell into weanalyze cloud:**
 
-   🔜 work in progress, will be updated soon...
+   🔜 Working in progress, will be updated soon...
 
 ## Examples
 
@@ -102,7 +102,7 @@ pip install workcell
 
 ## Contacts
 
-❓ If you have any questions about the workcell or anything about weanalyze , feel free to email us at: support@weanalyze.co
+❓ If you have any questions about the workcell or weanalyze , feel free to email us at: support@weanalyze.co
 
 🙋🏻 If you want to say hi, or are interested in partnering with us, feel free to reach us at: contact@weanalyze.co
 
