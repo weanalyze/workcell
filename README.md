@@ -27,8 +27,6 @@
 
 Instantly turn your Python function into production-ready microservice, with lightweight UI to interact with. Use / Share / Publish / Collaborate with your team. 
 
-<sup>Pre-alpha Version: Not feature-complete and only suggested for experimental usage.</sup>
-
 <img align="center" style="width: 100%" src="https://github.com/weanalyze/weanalyze-resources/blob/main/assets/workcell_intro.png?raw=true"/>
 
 ---
@@ -41,11 +39,24 @@ Instantly turn your Python function into production-ready microservice, with lig
 - 🧩&nbsp; Reuse pre-defined templates & combine with existing components.
 - 📈&nbsp; Instantly deploy and scale for production usage.
 
+## Status
+
+| Status | Stability | Goal |
+| ------ | ------ | ---- |
+| ✅ | Alpha | We are testing Workcell with a closed set of customers |
+| 🚧 | Public Alpha | Anyone can sign up over at weanalyze.co. But go easy on us, there are a few kinks. |
+| ❌ | Public Beta | Stable enough for most non-enterprise use-cases |
+| ❌ | Public | Production-ready |
+
+We are currently in Alpha. 
+
 ## Requirements
 
 Python 3.8+
 
 ## Installation
+
+Recomended: First activate your virtual environment, with your favourite system. For example, we like poetry and conda!
 
 ```bash
 pip install workcell
@@ -90,7 +101,7 @@ pip install workcell
 
 5. **Deploy workcell into weanalyze cloud:**
 
-   🔜 Working in progress, will be updated soon...
+   🚧 Working in progress, will be updated soon...
 
 ## Examples
 
