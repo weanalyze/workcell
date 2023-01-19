@@ -19,6 +19,13 @@
     </a>      
 </p>
 
+<h4 align="center">
+    <p>
+        <b>English</b> |
+        <a href="https://github.com/weanalyze/workcell/blob/main/README_zh-hans.md">简体中文</a> 
+    <p>
+</h4>
+
 <p align="center">
   <a href="#getting-started">Getting Started</a> •
   <a href="#license">License</a> •
