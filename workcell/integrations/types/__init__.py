@@ -1,2 +1,2 @@
 from .file_content import FileContent
-from .pandas_dataframe import PandasDataFrame
+from .perspective_table import PerspectiveTable
