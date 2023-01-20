@@ -1,19 +1,18 @@
-import pyarrow as pa
 import pandas as pd
-import perspective
 from pydantic import BaseModel, Field
+from workcell.core.serialization import serialize_dataframe_with_persepective
 
 from typing import TypeVar
-PerspectiveTableType = TypeVar('pandas.core.frame.DataFrame')
+PandasDataFrameType = TypeVar('pandas.core.frame.DataFrame')
 
 
 class PerspectiveTable(BaseModel):
-    data: PerspectiveTableType = Field(
-        ..., title="Perspective dataframe", description="A perspective table, will be encoded in Arrow format."
+    data: PandasDataFrameType = Field(
+        ..., title="Pandas dataframe", description="A pandas dataframe, will be converted into perspective table, encoded in Arrow format."
     )
 
     class Config:
         arbitrary_types_allowed = True
         json_encoders = {
-            perspective.Table: lambda v: pa.Table.from_pandas(v)
+            pd.DataFrame: lambda v: serialize_dataframe_with_persepective(v)
         } 
