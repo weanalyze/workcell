@@ -768,14 +768,14 @@ reference = "tsinghua"
 
 [[package]]
 name = "gitpython"
-version = "3.1.29"
+version = "3.1.30"
 description = "GitPython is a python library used to interact with Git repositories"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "GitPython-3.1.29-py3-none-any.whl", hash = "sha256:41eea0deec2deea139b459ac03656f0dd28fc4a3387240ec1d3c259a2c47850f"},
-    {file = "GitPython-3.1.29.tar.gz", hash = "sha256:cc36bfc4a3f913e66805a28e84703e419d9c264c1077e537b54f0e1af85dbefd"},
+    {file = "GitPython-3.1.30-py3-none-any.whl", hash = "sha256:cd455b0000615c60e286208ba540271af9fe531fa6a87cc590a7298785ab2882"},
+    {file = "GitPython-3.1.30.tar.gz", hash = "sha256:769c2d83e13f5d938b7688479da374c4e3d49f71549aaf462b646db9602ea6f8"},
 ]
 
 [package.dependencies]
@@ -1837,36 +1837,43 @@ reference = "tsinghua"
 
 [[package]]
 name = "perspective-python"
-version = "1.8.0"
+version = "1.9.3"
 description = "Python bindings and JupyterLab integration for Perspective"
 category = "main"
 optional = false
 python-versions = ">=3.7"
 files = [
-    {file = "perspective-python-1.8.0.tar.gz", hash = "sha256:57d98de9fc84b62d5dbc1261b19584e1a518a7f18b103e295145f0df6e7bb27c"},
+    {file = "perspective-python-1.9.3.tar.gz", hash = "sha256:87399e1bb227652bf777932c5a97859a0eb9465ae5303ab0a2529010c248f2cb"},
+    {file = "perspective_python-1.9.3-cp310-cp310-macosx_11_0_arm64.whl", hash = "sha256:4fadbee5fcf871b789f9ad1cece16503381c94a72ee183b1d37654be7655885f"},
+    {file = "perspective_python-1.9.3-cp310-cp310-macosx_11_0_x86_64.whl", hash = "sha256:9df64f52998734209665b55806f0061accef1228a3a1f073c2aa96f4574c0f50"},
+    {file = "perspective_python-1.9.3-cp310-cp310-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:019b59996f8818f3eb61e5e857f026d92e08371700f8aea0f5ae0cc9fc059c69"},
+    {file = "perspective_python-1.9.3-cp310-cp310-win_amd64.whl", hash = "sha256:38af250a26245c5e9868d8e03d61beab7382de3ed9833c58b02660921dd19486"},
+    {file = "perspective_python-1.9.3-cp38-cp38-macosx_10_15_x86_64.whl", hash = "sha256:388e7b4570bdf42f1545cc8293649b317f45e886007f3995fa82b7125d816620"},
+    {file = "perspective_python-1.9.3-cp38-cp38-macosx_11_0_arm64.whl", hash = "sha256:96d24e992c5c1b3cd732555ce0b79c9bed051c11e1fcd5725937d95cb8debfc1"},
+    {file = "perspective_python-1.9.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:ea328211457bf9389ebefd74587f4fe139cf1355002af137b7ed9be6f03b80d3"},
+    {file = "perspective_python-1.9.3-cp38-cp38-win_amd64.whl", hash = "sha256:b18d2f14e969ee80c2387ba288be579f5320f08d284596b88ce34e53c3a3dab5"},
+    {file = "perspective_python-1.9.3-cp39-cp39-macosx_11_0_arm64.whl", hash = "sha256:d6d7983bdc0eb86694b87b0e055be6df39a2619905fdf35395b5514d3b31b270"},
+    {file = "perspective_python-1.9.3-cp39-cp39-macosx_11_0_x86_64.whl", hash = "sha256:de8dd2af2975861e65d77bc3bbc40330a165c9afd6a08ef70c88b9264a415782"},
+    {file = "perspective_python-1.9.3-cp39-cp39-manylinux_2_17_x86_64.manylinux2014_x86_64.whl", hash = "sha256:39b998a488a52b4c9b6d56c287a9a60db1090e59b00b63db15c5fde9b5c05133"},
+    {file = "perspective_python-1.9.3-cp39-cp39-win_amd64.whl", hash = "sha256:c035f38f0f3acb1fc6ef237c9ce2428c382ec89dc0bfd2e4fcd7c20d08226fa3"},
 ]
 
 [package.dependencies]
 future = ">=0.16.0,<1"
 ipywidgets = ">=7.5.1,<8"
-numpy = ">=1.13.1,<2"
+numpy = ">=1.21.6,<2"
 pandas = ">=0.22.0,<2"
 python-dateutil = ">=2.8.0,<3"
 traitlets = ">=4.3.2,<6"
 
 [package.extras]
 aiohttp = ["aiohttp (>=3,<4)"]
-dev = ["Faker (>=1.0.0)", "Sphinx (>=1.8.4)", "aiohttp (>=3,<4)", "black (==22.8)", "fastapi (>=0.70,<1)", "flake8 (>=5)", "flake8-black (>=0.3.3)", "future (>=0.16.0,<1)", "httpx (>=0.23,<1)", "ipywidgets (>=7.5.1,<8)", "jupyterlab (>=3.2,<4)", "numpy (>=1.13.1,<2)", "pandas (>=0.22.0,<2)", "pip", "psutil (>=5,<6)", "pyarrow (>=0.16.0)", "pybind11 (>=2.4.0,<3)", "pytest (>=4.3.0)", "pytest-aiohttp (>=1)", "pytest-asyncio (>=0.20)", "pytest-check-links (>=0.7)", "pytest-cov (>=3)", "pytest-tornado (>=0.8)", "python-dateutil (>=2.8.0,<3)", "pytz (>=2022)", "sphinx-markdown-builder (>=0.5.2)", "starlette (>=0.20,<1)", "tornado (>=4.5.3,<6.2)", "traitlets (>=4.3.2,<6)", "wheel"]
-develop = ["Faker (>=1.0.0)", "Sphinx (>=1.8.4)", "aiohttp (>=3,<4)", "black (==22.8)", "fastapi (>=0.70,<1)", "flake8 (>=5)", "flake8-black (>=0.3.3)", "future (>=0.16.0,<1)", "httpx (>=0.23,<1)", "ipywidgets (>=7.5.1,<8)", "jupyterlab (>=3.2,<4)", "numpy (>=1.13.1,<2)", "pandas (>=0.22.0,<2)", "pip", "psutil (>=5,<6)", "pyarrow (>=0.16.0)", "pybind11 (>=2.4.0,<3)", "pytest (>=4.3.0)", "pytest-aiohttp (>=1)", "pytest-asyncio (>=0.20)", "pytest-check-links (>=0.7)", "pytest-cov (>=3)", "pytest-tornado (>=0.8)", "python-dateutil (>=2.8.0,<3)", "pytz (>=2022)", "sphinx-markdown-builder (>=0.5.2)", "starlette (>=0.20,<1)", "tornado (>=4.5.3,<6.2)", "traitlets (>=4.3.2,<6)", "wheel"]
+dev = ["Faker (>=1.0.0)", "Sphinx (>=1.8.4)", "aiohttp (>=3,<4)", "black (==22.8)", "fastapi (>=0.70,<1)", "flake8 (>=5)", "flake8-black (>=0.3.3)", "future (>=0.16.0,<1)", "httpx (>=0.23,<1)", "ipywidgets (>=7.5.1,<8)", "jupyterlab (>=3.2,<4)", "numpy (>=1.21.6,<2)", "pandas (>=0.22.0,<2)", "pip", "psutil (>=5,<6)", "pyarrow (>=0.16.0)", "pybind11 (>=2.4.0,<3)", "pytest (>=4.3.0)", "pytest-aiohttp (>=1)", "pytest-asyncio (>=0.20)", "pytest-check-links (>=0.7)", "pytest-cov (>=3)", "pytest-tornado (>=0.8)", "python-dateutil (>=2.8.0,<3)", "pytz (>=2022)", "sphinx-markdown-builder (>=0.5.2)", "starlette (>=0.20,<1)", "tornado (>=4.5.3,<6.2)", "traitlets (>=4.3.2,<6)", "wheel"]
+develop = ["Faker (>=1.0.0)", "Sphinx (>=1.8.4)", "aiohttp (>=3,<4)", "black (==22.8)", "fastapi (>=0.70,<1)", "flake8 (>=5)", "flake8-black (>=0.3.3)", "future (>=0.16.0,<1)", "httpx (>=0.23,<1)", "ipywidgets (>=7.5.1,<8)", "jupyterlab (>=3.2,<4)", "numpy (>=1.21.6,<2)", "pandas (>=0.22.0,<2)", "pip", "psutil (>=5,<6)", "pyarrow (>=0.16.0)", "pybind11 (>=2.4.0,<3)", "pytest (>=4.3.0)", "pytest-aiohttp (>=1)", "pytest-asyncio (>=0.20)", "pytest-check-links (>=0.7)", "pytest-cov (>=3)", "pytest-tornado (>=0.8)", "python-dateutil (>=2.8.0,<3)", "pytz (>=2022)", "sphinx-markdown-builder (>=0.5.2)", "starlette (>=0.20,<1)", "tornado (>=4.5.3,<6.2)", "traitlets (>=4.3.2,<6)", "wheel"]
 fastapi = ["fastapi (>=0.70,<1)", "starlette (>=0.20,<1)"]
 jupyter = ["jupyterlab (>=3.2,<4)"]
 starlette = ["fastapi (>=0.70,<1)", "starlette (>=0.20,<1)"]
 tornado = ["tornado (>=4.5.3,<6.2)"]
-
-[package.source]
-type = "legacy"
-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
-reference = "tsinghua"
 
 [[package]]
 name = "pexpect"
@@ -3517,4 +3524,4 @@ reference = "tsinghua"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.8,<3.9.7 || >3.9.7,<4.0"
-content-hash = "83e557bd1bcbb07ef8018610a78039c552adf0fea7e3fef492e65c7f715d667a"
+content-hash = "e7dfe8de709a16f9b09d44267d1e634c5c791542102be4986ac4f4df0e6e511b"
