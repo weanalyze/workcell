@@ -14,10 +14,8 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - dockerfile: ./docker/Dockerfile.python3.8
-            image: ghcr.io/weanalyze/workcell-python3.8
-          - dockerfile: ./docker/Dockerfile.python3.9
-            image: ghcr.io/weanalyze/workcell-python3.9
+          - dockerfile: ./docker/python3.8/Dockerfile
+            image: ghcr.io/weanalyze/workcell-app:python3.8
     permissions:
       contents: read
       packages: write
