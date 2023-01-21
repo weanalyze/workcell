@@ -1,4 +1,4 @@
-name: Build & publish workcell images
+name: Build & push workcell images
 
 on:
   push:
