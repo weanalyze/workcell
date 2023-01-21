@@ -1875,6 +1875,11 @@ jupyter = ["jupyterlab (>=3.2,<4)"]
 starlette = ["fastapi (>=0.70,<1)", "starlette (>=0.20,<1)"]
 tornado = ["tornado (>=4.5.3,<6.2)"]
 
+[package.source]
+type = "legacy"
+url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+reference = "tsinghua"
+
 [[package]]
 name = "pexpect"
 version = "4.8.0"
