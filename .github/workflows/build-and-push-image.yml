@@ -1,7 +1,9 @@
 name: Build & publish workcell images
+
 on:
-  release:
-    types: [published]
+  push:
+    tags:
+      - '*.*.*'
 
 env:
   REGISTRY: ghcr.io
