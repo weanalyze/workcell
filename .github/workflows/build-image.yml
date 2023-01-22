@@ -42,7 +42,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ matrix.image }}
-          tags: type=semver,prefix=${{ matrix.runtime }}-v-,pattern={{version}}
+          tags: type=semver,prefix=${{ matrix.runtime }}-v,pattern={{version}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
