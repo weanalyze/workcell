@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "workcell"
-version = "0.0.17"
+version = "0.0.18"
 description = "Turn python function into microservice."
 authors = ["jiandong <jiandong@weanalyze.co>"]
 license = "Apache-2.0"
