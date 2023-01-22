@@ -17,10 +17,10 @@ jobs:
       matrix:
         include:
           - dockerfile: ./docker/python3.8/Dockerfile
-            image: ghcr.io/weanalyze/workcell-app
+            image: ${{ env.REGISTRY }}/weanalyze/workcell-app
             runtime: "python3.8"
           - dockerfile: ./docker/python3.9/Dockerfile
-            image: ghcr.io/weanalyze/workcell-app
+            image: ${{ env.REGISTRY }}/weanalyze/workcell-app
             runtime: "python3.9"            
     permissions:
       contents: read
@@ -42,7 +42,10 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: ${{ matrix.image }}
-          tags: type=semver,prefix=${{ matrix.runtime }}-v,pattern={{version}}
+          flavor: |
+            latest=false 
+          tags: |
+            type=semver,prefix=${{ matrix.runtime }}-v,pattern={{version}}
 
       - name: Build and push Docker image
         uses: docker/build-push-action@v3
@@ -50,5 +53,7 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}, ${{ matrix.runtime }}-latest
+          tags: |
+            ${{ steps.meta.outputs.tags }}
+            ${{ matrix.image }}:${{ matrix.runtime }}-latest
           labels: ${{ steps.meta.outputs.labels }}
