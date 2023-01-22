@@ -17,10 +17,10 @@ jobs:
       matrix:
         include:
           - dockerfile: ./docker/python3.8/Dockerfile
-            image: ${{ env.REGISTRY }}/weanalyze/workcell-app
+            image: ghcr.io/weanalyze/workcell-app
             runtime: "python3.8"
           - dockerfile: ./docker/python3.9/Dockerfile
-            image: ${{ env.REGISTRY }}/weanalyze/workcell-app
+            image: ghcr.io/weanalyze/workcell-app
             runtime: "python3.9"            
     permissions:
       contents: read
