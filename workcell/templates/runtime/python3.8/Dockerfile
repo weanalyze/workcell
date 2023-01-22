@@ -1,4 +1,4 @@
-FROM weanalyze/workcell-app:python3.8
+FROM ghcr.io/weanalyze/workcell-app:python3.8-latest
 
 # Install the function's dependencies using file requirements.txt
 # from your project folder.
