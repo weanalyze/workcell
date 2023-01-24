@@ -1,0 +1,12 @@
+{
+    "username": "",
+    "workcell_name": "",
+    "workcell_version": "latest",
+    "workcell_runtime": "python3.8",
+    "workcell_entrypoint": "",
+    "workcell_code": {
+        "ImageUri": ""
+    },
+    "workcell_tags": {},
+    "workcell_env": {}
+}
