@@ -1,4 +1,4 @@
-name: Build & push workcell images
+name: Build & push workcell to dockerhub
 
 on:
   push:
