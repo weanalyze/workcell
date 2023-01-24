@@ -6,7 +6,7 @@ on:
       - '*.*.*'
 
 env:
-  REGISTRY: docker.io
+  REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
 
 jobs:
@@ -17,10 +17,10 @@ jobs:
       matrix:
         include:
           - dockerfile: ./docker/python3.8/Dockerfile
-            image: weanalyze/workcell-app
+            image: ghcr.io/weanalyze/workcell-app
             runtime: "python3.8"
           - dockerfile: ./docker/python3.9/Dockerfile
-            image: weanalyze/workcell-app
+            image: ghcr.io/weanalyze/workcell-app
             runtime: "python3.9"            
     permissions:
       contents: read
