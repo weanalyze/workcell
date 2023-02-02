@@ -40,7 +40,8 @@ def launch_ui(workcell_path: str, port: int = 8501, host: str = '0.0.0.0') -> No
             python_path = f"set PYTHONPATH=%PYTHONPATH%;{getcwd()} &&"
             
         subprocess.run(
-            f"""{python_path} "{sys.executable}" -m streamlit run --server.address={host} --server.port={port} --server.headless=True --runner.magicEnabled=False --server.maxUploadSize=50 --browser.gatherUsageStats=False {f.name}""",
+            # f"""{python_path} "{sys.executable}" -m streamlit run --server.address={host} --server.port={port} --server.headless=True --runner.magicEnabled=False --server.maxUploadSize=50 --browser.gatherUsageStats=False {f.name}""",
+            f"""{python_path} "{sys.executable}" -m streamlit run --server.address={host} --server.port={port} --server.headless=True --runner.magicEnabled=False --server.maxUploadSize=200 --browser.gatherUsageStats=False {f.name}""",
             shell=True,
         )
         
