@@ -91,10 +91,10 @@ class InputUI:
         self._schema_references = input_class.schema(by_alias=True).get(
             "definitions", {}
         )
-
         # TODO: check if state has input data
 
     def render_ui(self) -> None:
+
         if has_input_ui_renderer(self._input_class):
             # The input model has a rendering function
             # The rendering also returns the current state of input data
@@ -110,20 +110,17 @@ class InputUI:
         for property_key in self._schema_properties.keys():
             streamlit_app = st.sidebar
             property = self._schema_properties[property_key]
-
             if not property.get("title"):
                 # Set property key as fallback title
                 property["title"] = name_to_title(property_key)
-
             if property_key in required_properties:
                 streamlit_app = st
-
             try:
                 self._store_value(
                     property_key,
                     self._render_property(streamlit_app, property_key, property),
                 )
-            except Exception:
+            except:
                 pass
 
     def _get_default_streamlit_input_kwargs(self, key: str, property: Dict) -> Dict:
@@ -162,6 +159,7 @@ class InputUI:
             data_element = data_element[key_element]
         return None
 
+    # TODO: extend list of renderers
     def _render_single_datetime_input(
         self, streamlit_app: st, key: str, property: Dict
     ) -> Any:
@@ -193,7 +191,7 @@ class InputUI:
                     )
                 except Exception:
                     pass
-            with st.beta_container():
+            with st.container():
                 st.subheader(streamlit_kwargs.get("label"))
                 if streamlit_kwargs.get("description"):
                     st.text(streamlit_kwargs.get("description"))
@@ -258,9 +256,10 @@ class InputUI:
         self, streamlit_app: st, key: str, property: Dict
     ) -> Any:
         streamlit_kwargs = self._get_default_streamlit_input_kwargs(key, property)
-
+        
         if property.get("default"):
             streamlit_kwargs["value"] = property.get("default")
+
         elif property.get("example"):
             # TODO: also use example for other property types
             # Use example as value if it is provided
@@ -359,7 +358,7 @@ class InputUI:
 
         streamlit_app.markdown("---")
 
-        with streamlit_app.beta_container():
+        with streamlit_app.container():
             clear_col, add_col = streamlit_app.columns([1, 2])
 
             with clear_col:
@@ -522,7 +521,7 @@ class InputUI:
 
         streamlit_app.markdown("---")
 
-        with streamlit_app.beta_container():
+        with streamlit_app.container():
             clear_col, add_col = streamlit_app.columns([1, 2])
 
             with clear_col:
@@ -564,7 +563,7 @@ class InputUI:
 
         streamlit_app.markdown("---")
 
-        with streamlit_app.beta_container():
+        with streamlit_app.container():
             clear_col, add_col = streamlit_app.columns([1, 2])
 
             with clear_col:
