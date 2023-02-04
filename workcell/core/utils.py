@@ -1,14 +1,72 @@
+from __future__ import annotations
 import os
 import re
 import ast
 import json
 import inspect
 import importlib
+import requests
+from urllib.parse import urlparse
+import posixpath
+from typing import List
+
 from workcell.core.errors import (
     WorkcellImportStringFormatError,
     WorkcellParamsFormatError
 )
 
+
+########
+# Helper functions for file path
+########
+
+def safe_join(directory: str, path: str) -> str | None:
+    """Safely join zero or more untrusted path components to a base directory to avoid escaping the base directory.
+    Borrowed from: werkzeug.security.safe_join"""
+    _os_alt_seps: List[str] = list(
+        sep for sep in [os.path.sep, os.path.altsep] if sep is not None and sep != "/"
+    )
+
+    if path != "":
+        filename = posixpath.normpath(path)
+    else:
+        return directory
+
+    if (
+        any(sep in filename for sep in _os_alt_seps)
+        or os.path.isabs(filename)
+        or filename == ".."
+        or filename.startswith("../")
+    ):
+        return None
+    return posixpath.join(directory, filename)
+
+
+########
+# Helper functions for url
+########
+
+def get_server_url_from_ws_url(ws_url: str):
+    ws_url_parsed = urlparse(ws_url)
+    scheme = "http" if ws_url_parsed.scheme == "ws" else "https"
+    port = f":{ws_url_parsed.port}" if ws_url_parsed.port else ""
+    return f"{scheme}://{ws_url_parsed.hostname}{port}{ws_url_parsed.path.replace('queue/join', '')}"
+
+
+def validate_url(possible_url: str) -> bool:
+    headers = {"User-Agent": "workcell (https://weanalyze.co/; contact@weanalyze.co)"}
+    try:
+        head_request = requests.head(possible_url, headers=headers)
+        if head_request.status_code == 405:
+            return requests.get(possible_url, headers=headers).ok
+        return head_request.ok
+    except Exception:
+        return False
+
+
+########
+# Helper functions for workcell
+########
 
 def name_to_title(
     name: str
