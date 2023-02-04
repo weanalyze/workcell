@@ -14,7 +14,7 @@ from fastapi.encoders import jsonable_encoder
 from pydantic import BaseModel, ValidationError, parse_obj_as
 
 from workcell.core import Workcell
-from workcell.core import name_to_title
+from workcell.core.utils import name_to_title
 from workcell.core.constants import STREAMLIT_RUNNER_SNIPPET
 from workcell.ui import schema_utils
 from workcell.ui.streamlit_utils import CUSTOM_STREAMLIT_CSS, SessionState, get_session_state
