@@ -207,7 +207,7 @@ $ serve [OPTIONS] WORKCELL_PATH
 
 **Options**:
 
-* `-p, --port INTEGER`: [default: 8080]
+* `-p, --port INTEGER`: [default: 3000]
 * `-h, --host TEXT`: [default: 0.0.0.0]
 * `--help`: Show this message and exit.
 
@@ -229,7 +229,7 @@ $ serve-ui [OPTIONS] WORKCELL_PATH
 
 **Options**:
 
-* `-p, --port INTEGER`: [default: 8080]
+* `-p, --port INTEGER`: [default: 3000]
 * `-h, --host TEXT`: [default: 0.0.0.0]
 * `--help`: Show this message and exit.
 
