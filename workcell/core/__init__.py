@@ -1,2 +1,2 @@
-from .model import Workcell
+from .workcell import Workcell
 from .components import Component

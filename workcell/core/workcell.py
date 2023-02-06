@@ -1,12 +1,14 @@
+from __future__ import annotations
 import importlib
 import inspect
-import re
-import os
-import json
-from typing import Any, Callable, Type, Union, get_type_hints
+from typing import Any, Dict, Optional
+from typing import Callable, Type, get_type_hints
 from pydantic import BaseModel, parse_raw_as
 from pydantic.tools import parse_obj_as
+
+from workcell.core.components import Component
 from workcell.core.utils import format_workcell_entrypoint, name_to_title
+from workcell.core.utils import gen_workcell_config
 from workcell.core.spec import generate_json_schema
 from workcell.core.errors import (
     CallableTypeError
@@ -20,79 +22,65 @@ def is_compatible_type(type: Type) -> bool:
             return True
     except Exception:
         pass
-
     try:
         # valid list type
         if type.__origin__ is list and issubclass(type.__args__[0], BaseModel):
             return True
     except Exception:
         pass
-
     return False
 
 
-def get_input_type(func: Callable) -> Type:
+def get_input_type(fn: Callable) -> Type | Component:
     """Returns the input type of a given function (callable).
-
     Args:
-        func: The function for which to get the input type.
-
+        fn: The function for which to get the input type.
     Raises:
         ValueError: If the function does not have a valid input type annotation.
     """
-    type_hints = get_type_hints(func)
-
+    type_hints = get_type_hints(fn)
     if "input" not in type_hints:
         raise ValueError(
             "The callable MUST have a parameter with the name `input` with typing annotation. "
             "For example: `def my_workcell(input: InputModel) -> OutputModel:`."
         )
-
     input_type = type_hints["input"]
-
     if not is_compatible_type(input_type):
         raise ValueError(
             "The `input` parameter MUST be a subclass of the Pydantic BaseModel or a list of Pydantic models."
         )
-
     # TODO: return warning if more than one input parameters
-
     return input_type
 
 
-def get_output_type(func: Callable) -> Type:
+def get_output_type(fn: Callable) -> Type | Component:
     """Returns the output type of a given function (callable).
-
     Args:
-        func: The function for which to get the output type.
-
+        fn: The function for which to get the output type.
     Raises:
         ValueError: If the function does not have a valid output type annotation.
     """
-    type_hints = get_type_hints(func)
+    type_hints = get_type_hints(fn)
     if "return" not in type_hints:
         raise ValueError(
             "The return type of the callable MUST be annotated with type hints."
             "For example: `def my_workcell(input: InputModel) -> OutputModel:`."
         )
-
     output_type = type_hints["return"]
-
     if not is_compatible_type(output_type):
         raise ValueError(
             "The return value MUST be a subclass of the Pydantic BaseModel or a list of Pydantic models."
         )
-
     return output_type
 
 
-def get_spec(func: Callable) -> dict:
+def get_spec(fn: Callable) -> dict:
     """Get the spec of a given function (callable)."""
-    input_type = get_input_type(func)
-    output_type = get_output_type(func)
+    input_type = get_input_type(fn)
+    output_type = get_output_type(fn)
     # iterate ModelField to json serializable dict
     spec = {
-        "name": func.__name__,
+        "name": fn.__name__,
         "input": generate_json_schema([input_type]),
         "output": generate_json_schema([output_type]),
     }
@@ -102,84 +90,80 @@ def get_spec(func: Callable) -> dict:
 def get_callable(import_string: str) -> Callable:
     """Import a callable from an string."""
     # e.g. import_string = "examples.hello_world.app:hello_workcell"
-    # validation
     workcell_path = format_workcell_entrypoint(import_string)
     loader_path, function_name = workcell_path.split(":")[0], workcell_path.split(":")[-1]
     try:
         mod = importlib.import_module(loader_path)
-        func = getattr(mod, function_name)
+        fn = getattr(mod, function_name)
     except:
         raise ValueError("The callable path import failed! Given import string: {}".format(import_string))
-    return func
+    return fn
 
 
 class Workcell:
-    def __init__(self, func: Union[Callable, str], version: str = "latest") -> None:
+    def __init__(
+        self, 
+        fn: Callable | str,
+        version: Optional[str] = "latest",
+        runtime: Optional[str] = "python3.8",
+        image_uri: Optional[str] = None,
+        tags: Optional[Dict] = {},
+        envs: Optional[Dict] = {},        
+        auth: Optional[Dict] = None,
+        **kwargs,
+    ):
         """Initializes a Workcell.
         Args:
-            func: The function to be wrapped, can be a callable or a import_string.
+            fn: The function to be wrapped, can be a callable or a import_string.
                 e.g. import_string = "hello_workcell.app:hello_workcell"
-            version: The version of the workcell.
-                TODO: versioning
         Returns:
             A workcell instance.
         """
-        if isinstance(func, str):
-            # Try to load the function from a string notion
-            self.function = get_callable(func)
-        else:
-            self.function = func
+        # TODO: workcell function's version control & authentication
+        self._name = None        
+        self._import_string = None
+        self._version = version 
+        self._runtime = runtime
+        self._image_uri = image_uri
+        self._tags = tags
+        self._envs = envs
+        self._auth = auth
 
-        self._name = "workcell"
-        self._version = version # TODO: workcell function's versioning
-        self._description = ""   
-        self._input_type = None
-        self._output_type = None
+        # Get callable
+        if isinstance(fn, str):
+            # Try to load the function from a string notion
+            self.function = get_callable(fn)
+            self._import_string = fn
+        else:
+            self.function = fn
+            self._import_string = "app:" + str(self.function.__name__)
 
         if not callable(self.function):
-            raise ValueError("The provided function parameters is not a callable.")
+            raise CallableTypeError(str(self.function))
 
         if inspect.isclass(self.function):
-            raise ValueError(
-                "The provided callable is an uninitialized Class. This is not allowed."
-            )
+            raise CallableTypeError("The provided callable is an uninitialized Class. This is not allowed.")
 
         if inspect.isfunction(self.function):
             # The provided callable is a function
             self._input_type = get_input_type(self.function)
             self._output_type = get_output_type(self.function)
-
-            try:
-                # Get name
-                self._name = name_to_title(self.function.__name__)
-            except Exception:
-                pass
-
-            try:
-                # Get description from function
-                doc_string = inspect.getdoc(self.function)
-                if doc_string:
-                    self._description = doc_string
-            except Exception:
-                pass
+            self._name = name_to_title(self.function.__name__)
+            # Get description from function
+            doc_string = inspect.getdoc(self.function)
+            if doc_string:
+                self._description = doc_string
             
         elif hasattr(self.function, "__call__"):
             # The provided callable is a function
             self._input_type = get_input_type(self.function.__call__)  # type: ignore
             self._output_type = get_output_type(self.function.__call__)  # type: ignore
-
+            self._name = name_to_title(type(self.function).__name__)
+            # Get description from function
             try:
-                # Get name
-                self._name = name_to_title(type(self.function).__name__)
-            except Exception:
-                pass
-
-            try:
-                # Get description from
                 doc_string = inspect.getdoc(self.function.__call__)  # type: ignore
                 if doc_string:
                     self._description = doc_string
-
                 if (
                     not self._description
                     or self._description == "Call self as a function."
@@ -188,7 +172,7 @@ class Workcell:
                     doc_string = inspect.getdoc(self.function)
                     if doc_string:
                         self._description = doc_string
-            except Exception:
+            except Exception as e:
                 pass
         else:
             raise CallableTypeError("Unknown callable type.")
@@ -196,11 +180,7 @@ class Workcell:
     @property
     def name(self) -> str:
         return self._name
-    
-    @property
-    def version(self) -> str:
-        return self._version
-    
+
     @property
     def description(self) -> str:
         return self._description
@@ -214,20 +194,61 @@ class Workcell:
         return self._output_type
 
     @property
-    def spec(self) -> str:     
-        spec = get_spec(self.function)
-        return spec
+    def spec(self) -> Any:
+        return get_spec(self.function)
+
+    @property
+    def config(self) -> Dict:
+        config = gen_workcell_config(
+            import_string = self._import_string,
+            image_uri = self._image_uri,
+            workcell_version = self._version,
+            workcell_runtime = self._runtime, 
+            workcell_tags = str(self._tags),
+            workcell_env = str(self._envs)
+        ) 
+        return config
 
     def __call__(self, input: Any, **kwargs: Any) -> Any:
-
         input_obj = input
-
         if isinstance(input, str):
             # Allow json input
             input_obj = parse_raw_as(self.input_type, input)
-
         if isinstance(input, dict):
             # Allow dict input
             input_obj = parse_obj_as(self.input_type, input)
-
         return self.function(input_obj, **kwargs)
+
+
+class WorkcellFunction:
+    def __init__(
+        self,
+        fn: Callable | str | None,
+        inputs: Component,
+        outputs: Component,
+        preprocess: bool,
+        postprocess: bool,
+        inputs_as_dict: bool,
+    ):
+        self.fn = fn
+        self.inputs = inputs
+        self.outputs = outputs
+        self.preprocess = preprocess
+        self.postprocess = postprocess
+        self.total_runtime = 0
+        self.total_runs = 0
+        self.inputs_as_dict = inputs_as_dict
+
+    def __str__(self):
+        return str(
+            {
+                "fn": getattr(self.fn, "__name__", "fn")
+                if self.fn is not None
+                else None,
+                "preprocess": self.preprocess,
+                "postprocess": self.postprocess,
+            }
+        )
+
+    def __repr__(self):
+        return str(self)

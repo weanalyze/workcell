@@ -17,7 +17,7 @@ from workcell.core.errors import (
 
 
 ########
-# Helper functions for file path
+# Helper functions for file
 ########
 
 def safe_join(directory: str, path: str) -> str | None:

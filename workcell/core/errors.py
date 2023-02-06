@@ -45,3 +45,14 @@ class DockerBuildError(Error):
         super().__init__(
             f'Docker build failed, error: \"{docker_build_output}.\"'
         )
+
+###############
+# Main Routes
+###############
+
+class TemplateNotFoundError(Error):
+    """Raised when a Template file not found."""
+    def __init__(self, msg):
+        super().__init__(
+            f"Workcell ui template not found: {msg}. "
+        )
