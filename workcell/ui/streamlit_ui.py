@@ -49,9 +49,9 @@ def launch_ui(workcell_path: str, port: int = 8501, host: str = '0.0.0.0') -> No
         unlink(f.name)
 
 
-def function_has_named_arg(func: Callable, parameter: str) -> bool:
+def function_has_named_arg(fn: Callable, parameter: str) -> bool:
     try:
-        sig = inspect.signature(func)
+        sig = inspect.signature(fn)
         for param in sig.parameters.values():
             if param.name == "input":
                 return True
