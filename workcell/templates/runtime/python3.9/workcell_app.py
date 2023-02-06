@@ -1,7 +1,7 @@
 import os
 import json
 from workcell.core import Workcell
-from workcell.api import create_api
+from workcell.api import create_app
 from mangum import Mangum
 
 
@@ -12,7 +12,7 @@ with open("./workcell_config.json", "r") as f:
 openapi_prefix = "{}/{}".format(workcell_config['username'], workcell_config['workcell_name'])
 
 # here's the magic
-app = create_api(Workcell(workcell_config['workcell_entrypoint']))
+app = create_app(Workcell(workcell_config['workcell_entrypoint']))
 app.root_path = openapi_prefix
 
 # create lambda handler
