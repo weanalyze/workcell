@@ -9,7 +9,6 @@ from pydantic.error_wrappers import ValidationError
 
 from workcell import __version__ as workcell_version
 from workcell.api.routes import launch_app  # type: ignore
-from workcell.ui.streamlit_ui import launch_ui  # type: ignore
 from workcell.core.constants import SCAFFOLD_FOLDER, RUNTIME_FOLDER, WORKCELL_API_GATEWAY
 from workcell.core.utils import (
     gen_workcell_config, 
@@ -83,7 +82,7 @@ def new(
 @cli.command()
 def serve(
     workcell_path: str,
-    port: int = typer.Option(3000, "--port", "-p"),
+    port: int = typer.Option(7860, "--port", "-p"),
     host: str = typer.Option("0.0.0.0", "--host", "-h"),
 ) -> None:
     """Start a HTTP API server for the workcell.
@@ -91,20 +90,6 @@ def serve(
     This will launch a FastAPI server based on the OpenAPI standard and with a automatic interactive documentation.
     """
     launch_app(workcell_path, port, host)
-    return None
-
-
-@cli.command()
-def serve_ui(
-    workcell_path: str,
-    port: int = typer.Option(3000, "--port", "-p"),
-    host: str = typer.Option("0.0.0.0", "--host", "-h"),
-) -> None:
-    """Start a UI server for the workcell.
-
-    This will launch a Streamlit server based on the Pydantic standard.
-    """
-    launch_ui(workcell_path, port, host)
     return None
 
 
