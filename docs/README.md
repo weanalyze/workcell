@@ -1,4 +1,4 @@
-# Workcell CLI
+# CLI
 
 **Usage**:
 
@@ -8,6 +8,8 @@ $ [OPTIONS] COMMAND [ARGS]...
 
 **Options**:
 
+* `--install-completion`: Install completion for the current shell.
+* `--show-completion`: Show completion for the current shell, to copy it or customize the installation.
 * `--help`: Show this message and exit.
 
 **Commands**:
@@ -19,7 +21,6 @@ $ [OPTIONS] COMMAND [ARGS]...
 * `new`: Init a new workcell template.
 * `push`: Push image for workcell.
 * `serve`: Start a HTTP API server for the workcell.
-* `serve-ui`: Start a UI server for the workcell.
 * `teardown`: Teardown a workcell on weanalyze cloud.
 * `up`: Build->push->deploy a workcell to weanalyze...
 * `version`: Return workcell version.
@@ -207,29 +208,7 @@ $ serve [OPTIONS] WORKCELL_PATH
 
 **Options**:
 
-* `-p, --port INTEGER`: [default: 3000]
-* `-h, --host TEXT`: [default: 0.0.0.0]
-* `--help`: Show this message and exit.
-
-## `serve-ui`
-
-Start a UI server for the workcell.
-
-This will launch a Streamlit server based on the Pydantic standard.
-
-**Usage**:
-
-```console
-$ serve-ui [OPTIONS] WORKCELL_PATH
-```
-
-**Arguments**:
-
-* `WORKCELL_PATH`: [required]
-
-**Options**:
-
-* `-p, --port INTEGER`: [default: 3000]
+* `-p, --port INTEGER`: [default: 7860]
 * `-h, --host TEXT`: [default: 0.0.0.0]
 * `--help`: Show this message and exit.
 
