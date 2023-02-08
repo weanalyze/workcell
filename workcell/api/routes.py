@@ -17,7 +17,10 @@ from starlette.responses import RedirectResponse
 
 from workcell import __ui_version__ as workcell_ui_version
 from workcell.core import Workcell
-from workcell.core.constants import TEMPLATE_FOLDER
+from workcell.core.constants import (
+    TEMPLATE_FOLDER,
+    WORKCELL_PORT
+)
 from workcell.core.documentation import document, set_documentation_group
 from workcell.core.errors import (
     TemplateNotFoundError,
@@ -69,7 +72,19 @@ class App(fastapi.FastAPI):
 
     def configure_app(self, workcell: Workcell) -> None:
         self.workcell = workcell
-        # self.workcell_config = workcell.config
+        return None
+
+    def update_app(self, 
+        workcell_url: Optional[str]=None, 
+        workcell_host: Optional[str]="0.0.0.0",
+        workcell_port: Optional[int]=7860,
+        workcell_style: Optional[str]="dark",
+    ) -> None:
+        self.workcell_host = workcell_host
+        self.workcell_port = workcell_port
+        self.workcell_url = workcell_url
+        self.workcell_style = workcell_style
+        return None
 
     def get_workcell(self) -> Workcell:
         if self.workcell is None:
@@ -79,12 +94,14 @@ class App(fastapi.FastAPI):
     def get_workcell_config(self) -> Dict:
         if self.workcell is None:
             raise ValueError("No Workcell has been configured for this app.")
-        # filter workcell config
-        # config = self.workcell_config
-        config = {}
-        config['workcell_ui_version'] = workcell_ui_version
-        config['workcell_server_url'] = "http://0.0.0.0:3000" # TODO: changable
-        return config
+        # workcell_config = self.workcell.config
+        workcell_config = {}
+        if self.workcell_url:
+            workcell_url = self.workcell_url
+        else:
+            workcell_url = "http://" + str(self.workcell_host) + ":" + str(self.workcell_port)
+        workcell_config['workcell_url'] = workcell_url
+        return workcell_config
 
 
 def create_app(workcell: Workcell) -> App:
@@ -115,11 +132,9 @@ def create_app(workcell: Workcell) -> App:
         return RedirectResponse("./docs")
 
     # UI
-    @app.head("/ui", response_class=HTMLResponse)
     @app.get("/ui", response_class=HTMLResponse)
     def ui(request: fastapi.Request):
         mimetypes.add_type("application/javascript", ".js")
-        workcell = app.get_workcell()
         config = app.get_workcell_config()
         try:
             template ="frontend/index.html"
@@ -171,9 +186,10 @@ def create_app(workcell: Workcell) -> App:
     return app
 
 
-def launch_app(workcell_path: str, port: int = 3000, host: str = "0.0.0.0") -> None:
+def launch_app(workcell_path: str, port: int = WORKCELL_PORT, host: str = "0.0.0.0") -> None:
     import uvicorn
     workcell_app = create_app(Workcell(workcell_path))
+    workcell_app.update_app(workcell_host=host, workcell_port=port)
     uvicorn.run(workcell_app, host=host, port=port, log_level="info")
 
 
