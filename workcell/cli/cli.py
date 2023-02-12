@@ -3,6 +3,7 @@ import os
 import sys
 import dotenv
 import typer
+from typing import Tuple
 from workcell import __version__ as workcell_version
 from workcell.core.constants import (
     SCAFFOLD_FOLDER, 
@@ -20,10 +21,7 @@ from workcell.deploy.huggingface import HuggingfaceWrapper
 from workcell.utils.serve import launch_app, launch_app_socket  # type: ignore
 from workcell.cli.builder import (
     init_workcell_build_dir, 
-    init_workcell_project_dir,
-    package_workcell, 
-    image_builder, 
-    image_pusher
+    init_workcell_project_dir
 )
 from workcell.cli.export import ExportFormat
 
@@ -105,7 +103,7 @@ def pack(
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     workcell_tags: str = typer.Option("{}", "--workcell_tags"),
     workcell_env: str = typer.Option("{}", "--workcell_env"),
-) -> str:
+) -> Tuple[str, str]:
     """Prepare deployment image for workcell.
     This will create a deployment folder and build docker image. \n
     Args: \n
@@ -165,13 +163,14 @@ def pack(
         workcell_config = workcell_config, 
         dest = workcell_config_file
     ) 
-    typer.secho("Workcell pack complete!", fg=typer.colors.GREEN)
+    typer.secho("✨ Workcell pack complete!" + "\n" 
+                + "Build dir: {}".format(build_dir), fg=typer.colors.GREEN)
     return build_dir, workcell_config
 
 @cli.command()
 def deploy(
     build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
-) -> str:
+) -> None:
     """Deploy workcell.
     This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
     Args: \n
@@ -198,10 +197,18 @@ def deploy(
     # check if exsists before create workspace
     space_info = hf_wrapper.get_space(repo_id=repo_id)
     if space_info is not None:
+        typer.secho("💥 Failed to create space!" + "\n"
+                    + "Provider: {}, repo: {} already exists!".format(workcell_config['workcell_provider'], repo_id), fg=typer.colors.RED, err=True)
         return None
     # create space
-    repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
-    return repo_url
+    try:
+        repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
+        typer.secho("✨ Workcell deploy complete!" + "\n"
+                    + "Provider: {}".format(workcell_config['workcell_provider']) + "\n" 
+                    + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+    except Exception as e:
+        typer.secho("Failed to create space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    return None
 
 @cli.command()
 def up(
