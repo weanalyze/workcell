@@ -2,7 +2,7 @@
 .weanalyze
 .workcell
 .DS_Store
-test_app
+test
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

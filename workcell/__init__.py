@@ -1,6 +1,8 @@
-"""Information about this library. This file will automatically changed (maybe)."""
+"""Information about this library. This file will automatically changed (by poetry-bump-version)."""
 
 __version__ = "0.0.21"
-__author__ = "jiandong"
-__email__ = "jiandong@weanalyze.co"
-__funsite__ = "https://fun.weanalyze.co"
+__ui_version__ = "0.1.6"
+
+from .core import Workcell
+from .core import create_workcell_app
+from .utils.serve import create_app
