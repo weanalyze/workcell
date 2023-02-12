@@ -1,10 +1,10 @@
-from workcell.core import Component
+from pydantic import BaseModel
 
 
-class Input(Component):
+class Input(BaseModel):
     message: str
 
-class Output(Component):
+class Output(BaseModel):
     message: str
 
 
