@@ -101,16 +101,64 @@ pip install workcell
     ```
     _In the output, there's a line that shows where your API is being served, on your local machine._
 
-4. Run the Streamlit based UI server from command-line:
+4. Use workcell as python package:
+
+    ⚡ You can also serve your function using ASGI web server like [Uvicorn](http://www.uvicorn.org/) and [FastAPI](https://fastapi.tiangolo.com/). Just import workcell and using `workcell.create_app` to wrap your function:
+
+    ```python
+    from pydantic import BaseModel
+    import workcell
+
+    class Input(BaseModel):
+        message: str
+
+    class Output(BaseModel):
+        message: str
+
+    def hello_workcell(input: Input) -> Output:
+        """Returns the `message` of the input data."""
+        return Output(message=input.message)
+
+    app = workcell.create_app(hello_workcell)
+    ```
+
+    Then you can run app using 
 
     ```bash
-    workcell serve-ui app:hello_workcell
+    cd hello_workcell
+    uvicorn app:app --host 0.0.0.0 --port 7860
     ```
-    _In the output, there's a line that shows where your UI is being served, on your local machine._
+    _In the output, there's a line that shows where your API is being served, on your local machine._
 
-5. **Deploy workcell into weanalyze cloud:**
+## Workcell deployment
 
-   🚧 Working in progress, will be updated soon...
+🤗 You can deploy your workcell to Hugging Face [Spaces](https://huggingface.co/spaces/launch) in one-click! 
+
+Sometimes, we need workcell run in a public cloud, or collabrate with our team, Hugging Face [Spaces](https://huggingface.co/spaces/launch) is an awesome place to do that.
+
+**Prepare your huggingface account**
+
+🔥 First you need a hugging face account, and prepare your Hugging Face Username and [User Access Tokens](https://huggingface.co/settings/tokens). Set environment variables like below, or you can create a `.env` file in your project folder.
+
+```bash
+export HUGGINGFACE_USERNAME={huggingface_username}
+export HUGGINGFACE_TOKEN={hf_XXX}
+```   
+
+**Deploy workcell into huggingface space**
+
+🛠️ Wrap your function using workcell in `app.py`:
+
+```python
+app = workcell.create_app(hello_workcell)
+```
+
+✨ Then simply run `workcell deploy`, voila!
+
+```bash
+cd hello_workcell
+workcell deploy app:hello_workcell
+```   
 
 ## Examples
 
