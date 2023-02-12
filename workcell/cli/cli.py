@@ -220,7 +220,7 @@ def build(
             function_dir=function_dir, 
             build_dir=build_dir,
             runtime_dir=template_dir, 
-            exclude_files=["Dockerfile"]
+            exclude_files=["Dockerfile"] # exclude from template_dir
         ) 
     else:
         init_workcell_build_dir(
