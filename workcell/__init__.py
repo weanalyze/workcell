@@ -4,3 +4,5 @@ __version__ = "0.0.21"
 __ui_version__ = "0.1.6"
 
 from .core import Workcell
+from .core import create_workcell_app
+from .utils.serve import create_app
