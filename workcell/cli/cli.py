@@ -8,14 +8,21 @@ import typer
 from pydantic.error_wrappers import ValidationError
 
 from workcell import __version__ as workcell_version
-from workcell.api.routes import launch_app  # type: ignore
-from workcell.core.constants import SCAFFOLD_FOLDER, RUNTIME_FOLDER, WORKCELL_API_GATEWAY
+from workcell.core.constants import (
+    SCAFFOLD_FOLDER, 
+    RUNTIME_FOLDER, 
+    WORKCELL_API_GATEWAY,
+    WORKCELL_SERVER_NAME,
+    WORKCELL_SERVER_PORT    
+)
 from workcell.core.utils import (
     gen_workcell_config, 
     save_workcell_config, 
     load_workcell_config, 
     valid_workcell_import_string
 )
+from workcell.deploy.huggingface import HuggingfaceWrapper
+from workcell.utils.serve import launch_app, launch_app_socket  # type: ignore
 from workcell.cli.builder import (
     init_workcell_build_dir, 
     init_workcell_project_dir,
@@ -26,11 +33,18 @@ from workcell.cli.builder import (
 from workcell.cli.export import ExportFormat
 
 
+"""
+Set local project directory
+"""
 # Switch to local project directory
 # Add the current working directory to the sys path
 # This is required to resolve the workcell path
 sys.path.append(os.getcwd()) 
 
+
+"""
+Load environment variables
+"""
 # Init weanalyze config directory
 weanalyze_config_dir = os.path.join(os.path.expanduser("~"), ".weanalyze")
 if not os.path.exists(weanalyze_config_dir):
@@ -47,9 +61,11 @@ project_dotenv =  os.path.join(os.getcwd(), ".env")
 dotenv.load_dotenv(project_dotenv)
 
 
+"""
+Typer command line tools
+"""
 # Typer command
 cli = typer.Typer()
-
 
 # Cli commandas
 @cli.command()
@@ -65,7 +81,8 @@ def version(
 @cli.command()
 def new(
     project_name: str,
-    workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r")
+    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"), # "huggingface", "weanalyze"
+    workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r") # "python3.8", "python3.9"
 ) -> None:
     """Init a new workcell template.
 
@@ -73,25 +90,23 @@ def new(
     """
     # user project dir
     project_dir = os.path.join(os.getcwd(), project_name) # "./{project_dir}"
-    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, workcell_runtime) # ".../workcell/templates/scaffold/python3.8"
+    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, workcell_runtime) # ".../workcell/templates/scaffold/aws/python3.8"
     init_workcell_project_dir(project_dir, scaffold_dir)
     typer.secho(f'Workcell project_dir created: {project_dir}', fg=typer.colors.GREEN, err=False)
     return None
 
-
 @cli.command()
 def serve(
     workcell_path: str,
-    port: int = typer.Option(7860, "--port", "-p"),
-    host: str = typer.Option("0.0.0.0", "--host", "-h"),
+    port: int = typer.Option(int(WORKCELL_SERVER_PORT), "--port", "-p"),
+    host: str = typer.Option(str(WORKCELL_SERVER_NAME), "--host", "-h"),
 ) -> None:
     """Start a HTTP API server for the workcell.
 
     This will launch a FastAPI server based on the OpenAPI standard and with a automatic interactive documentation.
     """
     launch_app(workcell_path, port, host)
-    return None
-
+    # launch_app_socket(workcell_path, port, host)
 
 @cli.command()
 def login(
@@ -138,11 +153,11 @@ def login(
         typer.secho(str(ex), fg=typer.colors.RED, err=True)
     return None
 
-
 @cli.command()
 def build(
     import_string: str,
     image_tag: str = typer.Option("", "--image_tag", "-t"),
+    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),
     workcell_version: str = typer.Option("latest", "--version", "-v"),
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     workcell_tags: str = typer.Option("{}", "--workcell_tags"),
@@ -157,6 +172,8 @@ def build(
         image_tag (str): docker image tag. \n
             e.g. image_tag = "weanalyze/hello_workcell:latest" \n
             if set to default "", it will be "{username}/{workcell_name}:{workcell_version}" \n
+        workcell_provider (str): workcell provider. \n
+            e.g. workcell_provider = "huggingface" \n            
         workcell_version (str): workcell version. \n
             e.g. workcell_version = "latest" \n
         workcell_runtime (str): workcell runtime. \n
@@ -184,6 +201,7 @@ def build(
     workcell_config = gen_workcell_config(
         import_string = import_string,
         image_uri = image_tag,
+        workcell_provider = workcell_provider, # workcell_provider in [ "huggingface", ...]
         workcell_version = workcell_version,
         workcell_runtime = workcell_runtime, # workcell_runtime in [ "python3.8", ...]
         workcell_tags = workcell_tags,
@@ -191,7 +209,7 @@ def build(
     ) 
     # user project dir
     function_dir = os.getcwd() # "./{project_dir}"
-    template_dir = os.path.join(RUNTIME_FOLDER, workcell_runtime) # ".../workcell/templates/runtime/python3.8"
+    template_dir = os.path.join(RUNTIME_FOLDER, workcell_provider, workcell_runtime) # ".../workcell/templates/runtime/huggingface/python3.8"
     build_dir = os.path.join(os.getcwd(), ".workcell") # "{project_dir}/.workcell/"
     workcell_config_file = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"
     
@@ -221,13 +239,12 @@ def build(
         image_uri = workcell_config["workcell_code"]['ImageUri']
     ) 
     # package .workcell into zipfile
-    package_workcell(
-        build_dir,
-        zip_file = os.path.join(build_dir, 'workcell.zip')
-    ) 
+    # package_workcell(
+    #     build_dir,
+    #     zip_file = os.path.join(build_dir, 'workcell.zip')
+    # ) 
     typer.secho("Workcell build complete!", fg=typer.colors.GREEN)
     return build_dir, workcell_config
-
 
 @cli.command()
 def push(
@@ -251,7 +268,6 @@ def push(
     ) 
     return None
 
-
 @cli.command()
 def deploy(
     build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
@@ -260,44 +276,33 @@ def deploy(
     This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
 
     Args: \n
+        provider (str): service provider, e.g. huggingface. \n
         build_dir (str): project build directory. \n
     Return: \n
         None.
     """
+    # check if environment variable `HUGGINGFACE_USERNAME` and `HUGGINGFACE_TOKEN`
+    if not os.getenv("HUGGINGFACE_USERNAME") or (os.getenv("HUGGINGFACE_USERNAME") is None):
+        typer.secho("Please set environment variable `HUGGINGFACE_USERNAME`.", fg=typer.colors.RED, err=True)
+        return None     
+    if not os.getenv("HUGGINGFACE_TOKEN") or (os.getenv("HUGGINGFACE_TOKEN") is None):
+        typer.secho("Please set environment variable `HUGGINGFACE_TOKEN`.", fg=typer.colors.RED, err=True)
+        return None 
     # load workcell_config
     workcell_config = load_workcell_config(
         src = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
     )
-    # Verification
-    try:    
-        if ('WORKCELL_TOKEN' in os.environ) and (os.getenv("WORKCELL_TOKEN") != ""):
-            # auth params
-            headers = {
-                "Authorization": "Bearer {}".format(os.getenv("WORKCELL_TOKEN")),
-            }             
-            # auth url 
-            url = WORKCELL_API_GATEWAY + "/workcell/deploy"
-            # package .workcell, and deploy with workcell_config to weanalyze cloud
-            zip_file = os.path.join(build_dir, 'workcell.zip')
-            # post to deploy
-            with open(zip_file, "rb") as f:
-                # request    
-                response = requests.post(
-                    url=url, 
-                    headers=headers, 
-                    data={'workcell_config':json.dumps(workcell_config)}, 
-                    files={"workcell_zipfile": f} 
-                )
-            if response.status_code == 200:
-                typer.echo("Workcell deployed, response text: {}".format(response.text))    
-            else:
-                typer.secho("Workcell deploy failed, status code: {}, response text: {}".format(response.status_code, response.text), fg=typer.colors.RED, err=True)
-        else:
-            typer.secho("Login required!", fg=typer.colors.RED, err=True)
-    except ValidationError as ex:
-        typer.secho(str(ex), fg=typer.colors.RED, err=True)    
-    return None
-
+    # parse workcell_config to deplot resources
+    repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
+    # huggingface hub api wrapper
+    hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
+    # check if exsists before create workspace
+    space_info = hf_wrapper.get_space(repo_id=repo_id)
+    if space_info is not None:
+        return None
+    # create space
+    repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
+    return repo_url
 
 @cli.command()
 def up(
@@ -343,7 +348,6 @@ def up(
     deploy(build_dir)
     return None
     
-
 @cli.command()
 def teardown(
     build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
@@ -364,31 +368,7 @@ def teardown(
     workcell_config = load_workcell_config(
         src = workcell_config_file
     )
-    # Verification
-    try:    
-        if ('WORKCELL_TOKEN' in os.environ) and (os.getenv("WORKCELL_TOKEN") != ""):
-            # auth params
-            headers = {
-                "Authorization": "Bearer {}".format(os.getenv("WORKCELL_TOKEN")),
-            }             
-            # auth url 
-            url = WORKCELL_API_GATEWAY + "/workcell/teardown"
-            # post to teardown
-            response = requests.post(
-                url=url, 
-                headers=headers, 
-                json=json.dumps(workcell_config),
-            )
-            if response.status_code == 200:
-                typer.echo("Workcell teardown complete, response text: {}".format(response.text))    
-            else:
-                typer.secho("Workcell teardown failed, status code: {}, response text: {}".format(response.status_code, response.text), fg=typer.colors.RED, err=True)
-        else:
-            typer.secho("Login required!", fg=typer.colors.RED, err=True)
-    except ValidationError as ex:
-        typer.secho(str(ex), fg=typer.colors.RED, err=True)
     return None
-
 
 @cli.command()
 def export(
