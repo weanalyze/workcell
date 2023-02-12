@@ -5,15 +5,25 @@ import ast
 import json
 import inspect
 import importlib
+import dotenv
 import requests
 from urllib.parse import urlparse
 import posixpath
 from typing import List
 
 from workcell.core.errors import (
+    WorkcellConfigGenerateError,
     WorkcellImportStringFormatError,
     WorkcellParamsFormatError
 )
+
+# Load weanalyze global environment variables
+weanalyze_dotenv = os.path.join(os.path.expanduser("~"), ".weanalyze", "env")
+dotenv.load_dotenv(weanalyze_dotenv)
+# Load project environment variables
+project_dotenv = os.path.join(os.getcwd(), ".env")
+dotenv.load_dotenv(project_dotenv)
+LOCALHOST_NAME = os.getenv("WORKCELL_SERVER_NAME", "127.0.0.1")
 
 
 ########
@@ -45,6 +55,40 @@ def safe_join(directory: str, path: str) -> str | None:
 ########
 # Helper functions for url
 ########
+def get_local_server_without_check(
+    server_name: str | None = None,
+    server_port: int | None = None,
+    ssl_keyfile: str | None = None,
+    ssl_certfile: str | None = None,
+    ssl_keyfile_password: str | None = None,   
+):
+    """Get a local server endpoint for the provided Interface
+    Parameters:
+    server_name: to make app accessible on local network, set this to "0.0.0.0". Can be set by environment variable WORKCELL_SERVER_NAME.
+    server_port: will start workcell app on this port (if available). Can be set by environment variable WORKCELL_SERVER_PORT.
+    auth: If provided, username and password (or list of username-password tuples) required to access the Workcells. Can also provide function that takes username and password and returns True if valid login.
+    ssl_keyfile: If a path to a file is provided, will use this as the private key file to create a local server running on https.
+    ssl_certfile: If a path to a file is provided, will use this as the signed certificate for https. Needs to be provided if ssl_keyfile is provided.
+    ssl_keyfile_password: If a password is provided, will use this with the ssl certificate for https.
+    Returns:
+    port: the port number the server is running on
+    path_to_local_server: the complete address that the local server can be accessed at
+    """
+    server_name = server_name or LOCALHOST_NAME
+    port = server_port
+    url_host_name = "localhost" if server_name == "0.0.0.0" else server_name
+
+    if ssl_keyfile is not None:
+        if ssl_certfile is None:
+            raise ValueError(
+                "ssl_certfile must be provided if ssl_keyfile is provided."
+            )
+        path_to_local_server = "https://{}:{}/".format(url_host_name, port)
+    else:
+        path_to_local_server = "http://{}:{}/".format(url_host_name, port) 
+
+    return url_host_name, port, path_to_local_server
+
 
 def get_server_url_from_ws_url(ws_url: str):
     ws_url_parsed = urlparse(ws_url)
@@ -147,6 +191,7 @@ def valid_workcell_import_string(
 def gen_workcell_config(
     import_string: str,
     image_uri:  str="",    
+    workcell_provider: str="huggingface",
     workcell_version: str="latest",
     workcell_runtime: str="python3.8", 
     workcell_tags: str="{}",
@@ -157,12 +202,14 @@ def gen_workcell_config(
     Args:
         import_string (str): import string / workcell fqdn.
             e.g. import_string = "app:hello_workcell"
+        image_uri (str): docker image uri.
+            e.g. image_uri = "weanalyze/hello_workcell:latest"        
+        workcell_provider (str): workcell provider.
+            e.g. workcell_provider = "huggingface"                
         workcell_version (str): workcell version.
             e.g. workcell_version = "latest"
         workcell_runtime (str): workcell runtime.
             e.g. workcell_runtime = "python3.8" 
-        image_uri (str): docker image uri.
-            e.g. image_uri = "weanalyze/hello_workcell:latest"
         workcell_tags (dict): workcell tags.
             e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}'
         workcell_env (dict): workcell env.
@@ -178,8 +225,8 @@ def gen_workcell_config(
         workcell_name = workcell_entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell" 
         workcell_version = workcell_version # "latest" | "v1.0.0" | "dev" | "prod"
         workcell_runtime = workcell_runtime # "python3.8" | "python3.9" | "nodejs14.x" | "nodejs12.x"
-    except:
-        raise WorkcellImportStringFormatError(import_string)
+    except Exception as e:
+        raise WorkcellConfigGenerateError(e)
     # workcell code
     try:
         if image_uri == "":
@@ -207,6 +254,7 @@ def gen_workcell_config(
     workcell_config = {
         "username": username,
         "workcell_name": workcell_name, 
+        "workcell_provider": workcell_provider,         
         "workcell_version": workcell_version, 
         "workcell_runtime": workcell_runtime, 
         "workcell_entrypoint": workcell_entrypoint, 

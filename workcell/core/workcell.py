@@ -119,24 +119,36 @@ class Workcell:
         Returns:
             A workcell instance.
         """
-        # TODO: workcell function's version control & authentication
-        self._name = None        
-        self._import_string = None
-        self._version = version 
-        self._runtime = runtime
-        self._image_uri = image_uri
-        self._tags = tags
-        self._envs = envs
+        # property
+        self.name = None 
+        self.version = version # TODO: workcell function's version control & authentication
+        self.description = None 
+        self.input_type = None
+        self.output_type = None
+        self.spec = None
+        self.config = {}
+        # workcell_config values
+        self.import_string = None
+        self.runtime = runtime
+        self.image_uri = image_uri
+        self.tags = tags
+        self.envs = envs
+        # authentication
         self._auth = auth
+        # deploy related
+        self.save_to = None # selenium test
+        self._favicon_path = None
+        self._is_share = False
+        self._provider = "localhost" # localhost, huggingface, ...
 
         # Get callable
         if isinstance(fn, str):
             # Try to load the function from a string notion
             self.function = get_callable(fn)
-            self._import_string = fn
+            self.import_string = fn
         else:
             self.function = fn
-            self._import_string = "app:" + str(self.function.__name__)
+            self.import_string = "app:" + str(self.function.__name__)
 
         if not callable(self.function):
             raise CallableTypeError(str(self.function))
@@ -144,70 +156,52 @@ class Workcell:
         if inspect.isclass(self.function):
             raise CallableTypeError("The provided callable is an uninitialized Class. This is not allowed.")
 
+        # name, description, input_type, output_type,
         if inspect.isfunction(self.function):
             # The provided callable is a function
-            self._input_type = get_input_type(self.function)
-            self._output_type = get_output_type(self.function)
-            self._name = name_to_title(self.function.__name__)
+            self.input_type = get_input_type(self.function)
+            self.output_type = get_output_type(self.function)
+            self.name = name_to_title(self.function.__name__)
             # Get description from function
             doc_string = inspect.getdoc(self.function)
             if doc_string:
-                self._description = doc_string
+                self.description = doc_string
             
         elif hasattr(self.function, "__call__"):
             # The provided callable is a function
-            self._input_type = get_input_type(self.function.__call__)  # type: ignore
-            self._output_type = get_output_type(self.function.__call__)  # type: ignore
-            self._name = name_to_title(type(self.function).__name__)
+            self.input_type = get_input_type(self.function.__call__)  # type: ignore
+            self.output_type = get_output_type(self.function.__call__)  # type: ignore
+            self.name = name_to_title(type(self.function).__name__)
             # Get description from function
             try:
                 doc_string = inspect.getdoc(self.function.__call__)  # type: ignore
                 if doc_string:
-                    self._description = doc_string
+                    self.description = doc_string
                 if (
-                    not self._description
-                    or self._description == "Call self as a function."
+                    not self.description
+                    or self.description == "Call self as a function."
                 ):
                     # Get docstring from class instead of __call__ function
                     doc_string = inspect.getdoc(self.function)
                     if doc_string:
-                        self._description = doc_string
+                        self.description = doc_string
             except Exception as e:
                 pass
         else:
             raise CallableTypeError("Unknown callable type.")
 
-    @property
-    def name(self) -> str:
-        return self._name
+        # Get spec
+        self.spec = get_spec(self.function)
 
-    @property
-    def description(self) -> str:
-        return self._description
-
-    @property
-    def input_type(self) -> Any:
-        return self._input_type
-
-    @property
-    def output_type(self) -> Any:
-        return self._output_type
-
-    @property
-    def spec(self) -> Any:
-        return get_spec(self.function)
-
-    @property
-    def config(self) -> Dict:
-        config = gen_workcell_config(
-            import_string = self._import_string,
-            image_uri = self._image_uri,
-            workcell_version = self._version,
-            workcell_runtime = self._runtime, 
-            workcell_tags = str(self._tags),
-            workcell_env = str(self._envs)
+        # Get config
+        self.config = gen_workcell_config(
+            import_string = self.import_string,
+            image_uri = self.image_uri,
+            workcell_version = self.version,
+            workcell_runtime = self.runtime, 
+            workcell_tags = str(self.tags),
+            workcell_env = str(self.envs)
         ) 
-        return config
 
     def __call__(self, input: Any, **kwargs: Any) -> Any:
         input_obj = input
@@ -220,7 +214,7 @@ class Workcell:
         return self.function(input_obj, **kwargs)
 
 
-class WorkcellFunction:
+class WorkcellApp:
     def __init__(
         self,
         fn: Callable | str | None,
