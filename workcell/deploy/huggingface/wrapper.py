@@ -14,12 +14,6 @@ from workcell.core.errors import (
 )
 
 
-# load dotenv
-project_dotenv = os.path.join(os.getcwd(), ".env")
-dotenv.load_dotenv(project_dotenv)
-HUGGINGFACE_TOKEN = os.environ["HUGGINGFACE_TOKEN"]
-
-
 class HuggingfaceWrapper:
 
     def __init__(self, endpoint: Optional[str]=None, token: Optional[str]=None) -> None:
@@ -27,10 +21,7 @@ class HuggingfaceWrapper:
             self._endpoint = endpoint
         else:
             self._endpoint = "https://huggingface.co"
-        if token:
-            self._token = token
-        else:
-            self._token = HUGGINGFACE_TOKEN
+        self._token = token
         # init
         self.hf_api = HfApi(
             endpoint=self._endpoint, 
