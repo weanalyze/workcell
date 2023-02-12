@@ -96,7 +96,7 @@ def init_workcell_project_dir(
         project_dir (str): path of user function dir.
             e.g. project_dir = "./{project_dir}"         
         scaffold_dir (str): path of template dir.
-            e.g. scaffold_dir = ".../workcell/templates/scaffold/python3.8" 
+            e.g. scaffold_dir = ".../workcell/templates/scaffold/aws/python3.8" 
           
     Returns:
         None: Init project dir. 

@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="https://cdn.jsdelivr.net/npm/@weanalyzehq/workcell-ui@0.1.6/dist/weanalyze.png" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@weanalyzehq/workcell-ui@0.1.6/dist/style.css">
+  <link rel="stylesheet" crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/@finos/perspective-viewer/dist/css/material-dark.css" />
+  <title>Workcell UI</title>
+</head>
+<body>
+  <div id="root"></div>
+  <div id="workcell-url" style="display: none;">{{ config.workcell_url }}</div>
+  <script type="importmap">
+    {
+      "imports": {
+        "./": "https://cdn.jsdelivr.net/npm/@weanalyzehq/workcell-ui@0.1.6/dist/"
+      }
+    }
+  </script>
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@weanalyzehq/workcell-ui@0.1.6/dist/workcell-ui.es.js"></script>
+</body>
+</html>
