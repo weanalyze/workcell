@@ -1,17 +1,12 @@
-cli.py
 """Command line interface."""
 import os
 import sys
-import json
-import requests
 import dotenv
 import typer
-from pydantic.error_wrappers import ValidationError
 from workcell import __version__ as workcell_version
 from workcell.core.constants import (
     SCAFFOLD_FOLDER, 
     RUNTIME_FOLDER, 
-    WORKCELL_API_GATEWAY,
     WORKCELL_SERVER_NAME,
     WORKCELL_SERVER_PORT    
 )
@@ -176,14 +171,14 @@ def pack(
 @cli.command()
 def deploy(
     build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
-) -> None:
+) -> str:
     """Deploy workcell.
     This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
     Args: \n
         provider (str): service provider, e.g. huggingface. \n
         build_dir (str): project build directory. \n
     Return: \n
-        None.
+        repo_url (str): huggingface repo url.
     """
     # check if environment variable `HUGGINGFACE_USERNAME` and `HUGGINGFACE_TOKEN`
     if not os.getenv("HUGGINGFACE_USERNAME") or (os.getenv("HUGGINGFACE_USERNAME") is None):
