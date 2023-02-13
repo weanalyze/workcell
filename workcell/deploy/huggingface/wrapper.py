@@ -66,7 +66,10 @@ class HuggingfaceWrapper:
             raise HuggingfaceUploadFolderError(e)
         return repo_url
 
-    def get_space(self, repo_id:str) -> SpaceInfo:
+    def get_space(
+        self, 
+        repo_id:str
+    ) -> SpaceInfo:
         """
         Retrieve space by repo_id.
         Params:
@@ -80,8 +83,14 @@ class HuggingfaceWrapper:
             return None
         return space_info
 
-    def update_space(self, repo_id:str, src_folder:str) -> RepoUrl:
+    def update_space(
+        self, 
+        repo_id:str, 
+        src_folder:str,
+        ignore_patterns: List[str] = IGNORE_PATTERNS
+    ) -> RepoUrl:
         """
+        TODO: Need further update.
         Update space by upload folder.
         Params:
         repo_id (str): A namespace (user or an organization) and a repo name separated by a /.
@@ -90,14 +99,27 @@ class HuggingfaceWrapper:
         folder_url (str): A URL to visualize the uploaded folder on the hub
         """
         try:
-            folder_url = self.hf_api.upload_folder(repo_id=repo_id, repo_type="space", folder_path=src_folder)
+            folder_url = self.hf_api.upload_folder(
+                repo_id=repo_id, 
+                repo_type="space", 
+                folder_path=src_folder,
+                ignore_patterns=ignore_patterns
+            )
         except Exception as e:
-            raise HuggingfaceUploadFolderError(e)    
+            raise HuggingfaceUploadFolderError(e)
         return folder_url
 
     def delete_space(self, repo_id:str) -> None:
+        """
+        Delete space by repo_id.
+        Params:
+        repo_id (str): A namespace (user or an organization) and a repo name separated by a /.
+        Returns:
+        None
+        """        
         try:
             self.hf_api.delete_repo(repo_id=repo_id, repo_type="space")
         except Exception as e:
             raise HuggingfaceDeleteRepoError(e) 
         return None
+        

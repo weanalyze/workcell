@@ -121,6 +121,7 @@ class Workcell:
         """
         # property
         self.name = None 
+        self.provider = None         
         self.version = version # TODO: workcell function's version control & authentication
         self.description = None 
         self.input_type = None

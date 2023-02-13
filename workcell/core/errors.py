@@ -15,7 +15,6 @@ class Error(Exception):
     def __str__(self):
         return repr(self.message)
 
-
 class WorkcellConfigGenerateError(Error):
     """Raised when a Workcell config generated failed."""
     def __init__(self, msg):
@@ -41,7 +40,14 @@ class WorkcellParamsFormatError(Error):
     """Raised when a Workcell parameters is not valid."""
     def __init__(self, workcell_params):
         super().__init__(
-            f"The workcell params is not valid: {workcell_params}, params should be wrapped as string. "
+            f"The workcell config params is not valid: {workcell_params}, params should be wrapped as string, or there're something missing (username/provider etc.). "
+        )
+
+class WorkcellParamsMissingError(Error):
+    """Raised when a Workcell parameters is missing."""
+    def __init__(self, workcell_params):
+        super().__init__(
+            f"There're something missing in workcell configs: {workcell_params}, username / provider / ... etc. "
         )
 
 class CallableTypeError(Error):
