@@ -1,17 +1,13 @@
 """Command line interface."""
 import os
 import sys
-import json
-import requests
 import dotenv
 import typer
-from pydantic.error_wrappers import ValidationError
-
+from typing import Tuple
 from workcell import __version__ as workcell_version
 from workcell.core.constants import (
     SCAFFOLD_FOLDER, 
     RUNTIME_FOLDER, 
-    WORKCELL_API_GATEWAY,
     WORKCELL_SERVER_NAME,
     WORKCELL_SERVER_PORT    
 )
@@ -25,13 +21,9 @@ from workcell.deploy.huggingface import HuggingfaceWrapper
 from workcell.utils.serve import launch_app, launch_app_socket  # type: ignore
 from workcell.cli.builder import (
     init_workcell_build_dir, 
-    init_workcell_project_dir,
-    package_workcell, 
-    image_builder, 
-    image_pusher
+    init_workcell_project_dir
 )
 from workcell.cli.export import ExportFormat
-
 
 """
 Set local project directory
@@ -40,7 +32,6 @@ Set local project directory
 # Add the current working directory to the sys path
 # This is required to resolve the workcell path
 sys.path.append(os.getcwd()) 
-
 
 """
 Load environment variables
@@ -60,7 +51,6 @@ dotenv.load_dotenv(weanalyze_dotenv)
 project_dotenv =  os.path.join(os.getcwd(), ".env")
 dotenv.load_dotenv(project_dotenv)
 
-
 """
 Typer command line tools
 """
@@ -72,7 +62,6 @@ cli = typer.Typer()
 def version(
 ) -> str:
     """Return workcell version.
-
     This will return the version of workcell package.
     """
     typer.secho(f'workcell-cli version: {workcell_version}', fg=typer.colors.GREEN, err=False)
@@ -85,12 +74,11 @@ def new(
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r") # "python3.8", "python3.9"
 ) -> None:
     """Init a new workcell template.
-
     This will create a template dir for workcell deployment.
     """
     # user project dir
     project_dir = os.path.join(os.getcwd(), project_name) # "./{project_dir}"
-    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, workcell_runtime) # ".../workcell/templates/scaffold/aws/python3.8"
+    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, workcell_provider, workcell_runtime) # ".../workcell/templates/scaffold/huggingface/python3.8"
     init_workcell_project_dir(project_dir, scaffold_dir)
     typer.secho(f'Workcell project_dir created: {project_dir}', fg=typer.colors.GREEN, err=False)
     return None
@@ -102,76 +90,25 @@ def serve(
     host: str = typer.Option(str(WORKCELL_SERVER_NAME), "--host", "-h"),
 ) -> None:
     """Start a HTTP API server for the workcell.
-
     This will launch a FastAPI server based on the OpenAPI standard and with a automatic interactive documentation.
     """
     launch_app(workcell_path, port, host)
     # launch_app_socket(workcell_path, port, host)
 
 @cli.command()
-def login(
-    username: str = typer.Option("", "--username", "-u"),
-    access_token: str = typer.Option("", "--access_token", "-a"),
-) -> None:
-    """Login into weanalyze.co.
-    
-    Provide username and access_token to login into weanalyze.co.
-    """
-    # Verification
-    try:    
-        # check if already logged in
-        if (os.getenv("WORKCELL_USERNAME") == username) and ('WORKCELL_TOKEN' in os.environ) and (os.getenv("WORKCELL_TOKEN") != ""):
-            typer.secho("Already logged in ! (username: {})".format(os.environ['WORKCELL_USERNAME']), fg=typer.colors.GREEN, err=False)
-            return None
-        else:
-            if (username == "") and (access_token == ""):
-                typer.secho("Please provide username and access_token.", fg=typer.colors.RED, err=True)
-                return None
-            elif access_token == "":
-                access_token = typer.prompt("Access Token", hide_input=True)
-                # login params
-                headers = {'Content-Type': 'application/x-www-form-urlencoded'}            
-                data = {
-                    'username': username,
-                    'password': access_token
-                } 
-                # login url
-                url = WORKCELL_API_GATEWAY + "/auth/token"
-                # login request   
-                response = requests.post(url=url, data=data, headers=headers)
-                if response.status_code == 200:
-                    # extract workcell_token
-                    workcell_token = response.json()["access_token"] # long-time cli workcell_token
-                    dotenv.set_key(weanalyze_dotenv, "WORKCELL_USERNAME", username)
-                    dotenv.set_key(weanalyze_dotenv, "WORKCELL_TOKEN", workcell_token)
-                    typer.echo("Login successful! (username: {}).".format(username))
-                else:
-                    typer.secho("Login failed! (response.status_code: {}, response.text:{}).".format(response.status_code, response.text), fg=typer.colors.RED, err=True) 
-            else:
-                pass
-    except ValidationError as ex:
-        typer.secho(str(ex), fg=typer.colors.RED, err=True)
-    return None
-
-@cli.command()
-def build(
+def pack(
     import_string: str,
-    image_tag: str = typer.Option("", "--image_tag", "-t"),
     workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),
     workcell_version: str = typer.Option("latest", "--version", "-v"),
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     workcell_tags: str = typer.Option("{}", "--workcell_tags"),
     workcell_env: str = typer.Option("{}", "--workcell_env"),
-) -> str:
+) -> Tuple[str, str]:
     """Prepare deployment image for workcell.
-
     This will create a deployment folder and build docker image. \n
     Args: \n
         import_string (str): import_string, a.k.a workcell fqdn. \n
             e.g. import_string = "app:hello_workcell" \n
-        image_tag (str): docker image tag. \n
-            e.g. image_tag = "weanalyze/hello_workcell:latest" \n
-            if set to default "", it will be "{username}/{workcell_name}:{workcell_version}" \n
         workcell_provider (str): workcell provider. \n
             e.g. workcell_provider = "huggingface" \n            
         workcell_version (str): workcell version. \n
@@ -186,13 +123,8 @@ def build(
         build_dir (str): project build directory. \n
         workcell_config (dict): workcell configuration dict. \n
     """
-    # check if environment variable `DOCKERHUB_USERNAME`
-    if not os.getenv("DOCKERHUB_USERNAME") or (os.getenv("DOCKERHUB_USERNAME") is None):
-        typer.secho("Please set environment variable `DOCKERHUB_USERNAME`.", fg=typer.colors.RED, err=True)
-        return None
-    dockerhub_username = os.getenv("DOCKERHUB_USERNAME")
+    # function name
     function_name = import_string.split(":")[1]
-    image_tag = image_tag if image_tag != "" else "{}/{}:{}".format(dockerhub_username, function_name, workcell_version)
     # check if function_name exists in app.py
     if not valid_workcell_import_string(import_string):
         typer.secho(f"Given function: {function_name} does not exists in app.py.", fg=typer.colors.RED, err=True)
@@ -200,7 +132,6 @@ def build(
     # generate workcell_config
     workcell_config = gen_workcell_config(
         import_string = import_string,
-        image_uri = image_tag,
         workcell_provider = workcell_provider, # workcell_provider in [ "huggingface", ...]
         workcell_version = workcell_version,
         workcell_runtime = workcell_runtime, # workcell_runtime in [ "python3.8", ...]
@@ -212,7 +143,6 @@ def build(
     template_dir = os.path.join(RUNTIME_FOLDER, workcell_provider, workcell_runtime) # ".../workcell/templates/runtime/huggingface/python3.8"
     build_dir = os.path.join(os.getcwd(), ".workcell") # "{project_dir}/.workcell/"
     workcell_config_file = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"
-    
     # init project dir
     if os.path.exists(os.path.join(function_dir,'Dockerfile')):
         typer.secho("Dockerfile exists, will use user-defined docker image.", fg=typer.colors.GREEN, err=False)
@@ -233,40 +163,9 @@ def build(
         workcell_config = workcell_config, 
         dest = workcell_config_file
     ) 
-    # build docker image
-    image_builder(
-        src = build_dir,
-        image_uri = workcell_config["workcell_code"]['ImageUri']
-    ) 
-    # package .workcell into zipfile
-    # package_workcell(
-    #     build_dir,
-    #     zip_file = os.path.join(build_dir, 'workcell.zip')
-    # ) 
-    typer.secho("Workcell build complete!", fg=typer.colors.GREEN)
+    typer.secho("✨ Workcell pack complete!" + "\n" 
+                + "Build dir: {}".format(build_dir), fg=typer.colors.GREEN)
     return build_dir, workcell_config
-
-@cli.command()
-def push(
-    build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
-) -> None:
-    """Push image for workcell.
-    This will push image to repository based on workcell_config. Must be running in project folder or given build_dir.
-
-    Args: \n
-        build_dir (str): project build directory. \n
-    Return: \n
-        None.
-    """
-    # load workcell_config
-    workcell_config = load_workcell_config(
-        src = os.path.join(build_dir, "workcell_config.json")  # "{project_dir}/.workcell/workcell_config.json"  
-    ) 
-    # load workcell_config    
-    image_pusher(
-        repository = workcell_config["workcell_code"]['ImageUri']
-    ) 
-    return None
 
 @cli.command()
 def deploy(
@@ -274,12 +173,11 @@ def deploy(
 ) -> None:
     """Deploy workcell.
     This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
-
     Args: \n
         provider (str): service provider, e.g. huggingface. \n
         build_dir (str): project build directory. \n
     Return: \n
-        None.
+        repo_url (str): huggingface repo url.
     """
     # check if environment variable `HUGGINGFACE_USERNAME` and `HUGGINGFACE_TOKEN`
     if not os.getenv("HUGGINGFACE_USERNAME") or (os.getenv("HUGGINGFACE_USERNAME") is None):
@@ -299,29 +197,35 @@ def deploy(
     # check if exsists before create workspace
     space_info = hf_wrapper.get_space(repo_id=repo_id)
     if space_info is not None:
+        typer.secho("💥 Failed to create space!" + "\n"
+                    + "Provider: {}, repo: {} already exists!".format(workcell_config['workcell_provider'], repo_id), fg=typer.colors.RED, err=True)
         return None
     # create space
-    repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
-    return repo_url
+    try:
+        repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
+        typer.secho("✨ Workcell deploy complete!" + "\n"
+                    + "Provider: {}".format(workcell_config['workcell_provider']) + "\n" 
+                    + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+    except Exception as e:
+        typer.secho("Failed to create space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    return None
 
 @cli.command()
 def up(
     import_string: str,
-    image_tag: str = typer.Option("", "--image_tag", "-t"),
+    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),
     workcell_version: str = typer.Option("latest", "--version", "-v"),
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
-    workcell_tags: str = typer.Option("{}", "--workcell-tags"),
-    workcell_env: str = typer.Option("{}", "--workcell-env"),
+    workcell_tags: str = typer.Option("{}", "--workcell_tags"),
+    workcell_env: str = typer.Option("{}", "--workcell_env"),
 ) -> None:
     """Build->push->deploy a workcell to weanalyze cloud.
-
-    This will create a deployment on weanalyze cloud. \n
+    This will create a deployment folder and build docker image. \n
     Args: \n
         import_string (str): import_string, a.k.a workcell fqdn. \n
             e.g. import_string = "app:hello_workcell" \n
-        image_tag (str): docker image tag. \n
-            e.g. image_tag = "weanalyze/hello_workcell:latest" \n
-            if set to default "", it will be "{username}/{workcell_name}:{workcell_version}" \n
+        workcell_provider (str): workcell provider. \n
+            e.g. workcell_provider = "huggingface" \n            
         workcell_version (str): workcell version. \n
             e.g. workcell_version = "latest" \n
         workcell_runtime (str): workcell runtime. \n
@@ -331,45 +235,22 @@ def up(
         workcell_env (dict): workcell env. \n
             e.g. workcell_env = '{"STAGE":"latest"}' \n
     Return: \n
-        None.
+        build_dir (str): project build directory. \n
+        workcell_config (dict): workcell configuration dict. \n
     """
-    # Step1. Building
-    build_dir, _ = build(
+    # Step1. Pack
+    build_dir, _ = pack(
         import_string,
-        image_tag,
+        workcell_provider,
         workcell_version,
         workcell_runtime,
         workcell_tags,
         workcell_env
-    )
-    # Step2. Push 
-    push(build_dir)    
-    # Step3. Deploy
+    ) 
+    # Step2. Deploy
     deploy(build_dir)
     return None
     
-@cli.command()
-def teardown(
-    build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
-) -> None:
-    """Teardown a workcell on weanalyze cloud.
-
-    This will delete workcell infra on weanalyze cloud. Must be running in project folder or given build_dir.
-
-    Args: \n
-        build_dir (str): project build directory. \n
-    Return: \n
-        None.
-    """
-    from workcell.core.utils import load_workcell_config
-    # function waiting for deployment
-    workcell_config_file = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
-    # load workcell_config
-    workcell_config = load_workcell_config(
-        src = workcell_config_file
-    )
-    return None
-
 @cli.command()
 def export(
     import_string: str, 
@@ -397,7 +278,6 @@ def export(
             fg=typer.colors.BRIGHT_YELLOW,
         )        
     return None
-
 
 if __name__ == "__main__":
     cli()
