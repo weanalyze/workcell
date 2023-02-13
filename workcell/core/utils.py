@@ -14,7 +14,8 @@ from typing import List
 from workcell.core.errors import (
     WorkcellConfigGenerateError,
     WorkcellImportStringFormatError,
-    WorkcellParamsFormatError
+    WorkcellParamsFormatError,
+    WorkcellParamsMissingError
 )
 
 # Load weanalyze global environment variables
@@ -144,9 +145,6 @@ def format_workcell_entrypoint(
         raise WorkcellImportStringFormatError(import_string)
     if ":" not in import_string:
         raise WorkcellImportStringFormatError(import_string)
-    # if contains porject_folder, remove it
-    # if "." in import_string:
-    #     import_string = import_string.split(".")[-1]
     
     # extract loader_path and function_name, import_string = "project_folder.app:function_name"
     loader_path = import_string.split(":")[0]
@@ -190,7 +188,7 @@ def valid_workcell_import_string(
 
 def gen_workcell_config(
     import_string: str,
-    image_uri:  str="",    
+    image_uri:  str="",
     workcell_provider: str="huggingface",
     workcell_version: str="latest",
     workcell_runtime: str="python3.8", 
@@ -220,7 +218,6 @@ def gen_workcell_config(
     """
     # extract workcell_config
     try:
-        username = os.environ["WORKCELL_USERNAME"]
         workcell_entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
         workcell_name = workcell_entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell" 
         workcell_version = workcell_version # "latest" | "v1.0.0" | "dev" | "prod"
@@ -229,15 +226,14 @@ def gen_workcell_config(
         raise WorkcellConfigGenerateError(e)
     # workcell code
     try:
-        if image_uri == "":
-            image_uri = "{}/{}:{}".format(username, workcell_name, workcell_version) # default build tag: {username}/{workcell_name}:{workcell_version}
-            workcell_code = {
-                "ImageUri": image_uri
-            }
-        else:
-            workcell_code = {
-                "ImageUri": image_uri
-            }
+        ## TODO: add Docker Hub username support
+        # if image_uri == "":
+        #     # default build tag: {username}/{workcell_name}:{workcell_version}
+        #     image_uri = "{}/{}:{}".format(username, workcell_name, workcell_version) 
+        ## ready to deploy
+        workcell_code = {
+            "ImageUri": image_uri
+        }
     except:
         raise WorkcellParamsFormatError(workcell_code)        
     # workcell tags
@@ -252,7 +248,6 @@ def gen_workcell_config(
         raise WorkcellParamsFormatError(workcell_env)
     # pack config
     workcell_config = {
-        "username": username,
         "workcell_name": workcell_name, 
         "workcell_provider": workcell_provider,         
         "workcell_version": workcell_version, 
