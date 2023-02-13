@@ -13,6 +13,8 @@ from workcell.core.errors import (
     HuggingfaceDeleteRepoError,
 )
 
+IGNORE_PATTERNS = ['__pycache__', '.*', '*.pyc', '*.pyo', '*.pyd', '*.so', '*.dylib', '*.egg-info', '*.egg', '*.dist-info', '*.egg-info', '*.egg', '*.dist-info', '*.git', '*.hg', '*.svn', '*.DS_Store', '*.gitignore', '*.gitattributes', '*.gitmodules', '*.gitkeep']
+
 
 class HuggingfaceWrapper:
 
@@ -34,7 +36,12 @@ class HuggingfaceWrapper:
         spaces = self.hf_api.list_spaces(author=author)
         return spaces
     
-    def create_space(self, repo_id:str, src_folder:str) -> RepoUrl:
+    def create_space(
+        self, 
+        repo_id: str, 
+        src_folder: str, 
+        ignore_patterns: List[str] = IGNORE_PATTERNS
+    ) -> RepoUrl:
         """
         Create a new space and upload a folder to it.
         Params:
@@ -49,7 +56,12 @@ class HuggingfaceWrapper:
         except Exception as e:
             raise HuggingfaceCreateRepoError(e)
         try:
-            folder_url = self.hf_api.upload_folder(repo_id=repo_id, repo_type="space", folder_path=src_folder)
+            folder_url = self.hf_api.upload_folder(
+                repo_id=repo_id, 
+                repo_type="space", 
+                folder_path=src_folder,
+                ignore_patterns=ignore_patterns
+            )
         except Exception as e:
             raise HuggingfaceUploadFolderError(e)
         return repo_url
