@@ -250,7 +250,49 @@ def up(
     # Step2. Deploy
     deploy(build_dir)
     return None
-    
+
+@cli.command()
+def teardown(
+    build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
+) -> None:
+    """Teardown workcell deployment.
+    This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
+    Args: \n
+        build_dir (str): project build directory. \n
+    Return: \n
+        None.
+    """
+    # check if environment variable `HUGGINGFACE_USERNAME` and `HUGGINGFACE_TOKEN`
+    if not os.getenv("HUGGINGFACE_USERNAME") or (os.getenv("HUGGINGFACE_USERNAME") is None):
+        typer.secho("Please set environment variable `HUGGINGFACE_USERNAME`.", fg=typer.colors.RED, err=True)
+        return None     
+    if not os.getenv("HUGGINGFACE_TOKEN") or (os.getenv("HUGGINGFACE_TOKEN") is None):
+        typer.secho("Please set environment variable `HUGGINGFACE_TOKEN`.", fg=typer.colors.RED, err=True)
+        return None 
+    # load workcell_config
+    workcell_config = load_workcell_config(
+        src = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
+    )
+    # parse workcell_config to deplot resources
+    repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
+    # huggingface hub api wrapper
+    hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
+    # check if exsists before teardown workspace
+    space_info = hf_wrapper.get_space(repo_id=repo_id)
+    if space_info is None:
+        typer.secho("💥 Failed to teardown space!" + "\n"
+                    + "Provider: {}, repo: {} not exists!".format(workcell_config['workcell_provider'], repo_id), fg=typer.colors.RED, err=True)
+        return None
+    # teardown space
+    try:
+        repo_url = hf_wrapper.delete_space(repo_id=repo_id)
+        typer.secho("✨ Workcell teardown complete!" + "\n"
+                    + "Provider: {}".format(workcell_config['workcell_provider']) + "\n" 
+                    + "Original endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+    except Exception as e:
+        typer.secho("Failed to teardown space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    return None
+
 @cli.command()
 def export(
     import_string: str, 

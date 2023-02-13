@@ -15,12 +15,12 @@ from fastapi.responses import (
 )
 from starlette.responses import RedirectResponse
 
-from workcell import __ui_version__ as workcell_ui_version
 from workcell.core.workcell import Workcell
 from workcell.core.utils import get_local_server_without_check
 from workcell.core.constants import (
     TEMPLATE_FOLDER,
-    WORKCELL_UI_TEMPLATE
+    WORKCELL_UI_TEMPLATE,
+    WORKCELL_UI_MANIFEST
 )
 from workcell.core.errors import (
     TemplateNotFoundError,
@@ -126,7 +126,8 @@ def create_workcell_app(workcell: Workcell) -> App:
                 raise
             # ui config
             config = {
-                "workcell_url": workcell_url
+                "workcell_minifest_url": WORKCELL_UI_MANIFEST,
+                "workcell_server_url": workcell_url
             }
             return templates.TemplateResponse(
                 template, {"request": request, "config": config}
