@@ -11,7 +11,8 @@ from workcell.core.utils import format_workcell_entrypoint, name_to_title
 from workcell.core.utils import gen_workcell_config
 from workcell.core.spec import generate_json_schema
 from workcell.core.errors import (
-    CallableTypeError
+    CallableTypeError,
+    WorkcellConfigFormatError
 )
 
 
@@ -103,10 +104,11 @@ def get_callable(import_string: str) -> Callable:
 class Workcell:
     def __init__(
         self, 
-        fn: Callable | str,
+        fn: Callable | str | Dict, # callable function, import string, workcell_config
+        provider: Optional[str] = "localhost",
+        image_uri: Optional[str] = None,
         version: Optional[str] = "latest",
         runtime: Optional[str] = "python3.8",
-        image_uri: Optional[str] = None,
         tags: Optional[Dict] = {},
         envs: Optional[Dict] = {},        
         auth: Optional[Dict] = None,
@@ -114,52 +116,67 @@ class Workcell:
     ):
         """Initializes a Workcell.
         Args:
-            fn: The function to be wrapped, can be a callable or a import_string.
-                e.g. import_string = "hello_workcell.app:hello_workcell"
+            fn: The function to be wrapped, can be a callable, a import_string or workcell_config.
+                e.g. fn = hello_workcell
+                e.g. fn = "hello_workcell.app:hello_workcell"
+                e.g. fn = {
+                        "workcell_name": "hello_workcell",
+                        "workcell_provider": "huggingface",
+                     }
         Returns:
             A workcell instance.
         """
         # authentication
-        self._auth = auth        
-        # property
-        self.name = None # function name
-        self.title = None # title for api/ui
-        self.provider = None         
-        self.version = version # TODO: workcell function's version control & authentication
-        self.description = None 
-        self.input_type = None
-        self.output_type = None
-        self.spec = None
-        self.config = {}
-        # workcell_config values
-        self.provider = "localhost" # localhost, huggingface, ...          
-        self.workcell_id = None
-        self.import_string = None
-        self.runtime = runtime
-        self.image_uri = image_uri
-        self.tags = tags
-        self.envs = envs
-        # deploy related
-        self.favicon_path = None
-        self.is_share = False
-        self.save_to = None # selenium test
-        
-        # Get callable
-        if isinstance(fn, str):
-            # Try to load the function from a string notion
-            self.function = get_callable(fn)
-            self.import_string = fn
-        else:
-            self.function = fn
-            self.import_string = "app:" + str(self.function.__name__)
+        self._auth = auth           
+        # extract from workcell config
+        if isinstance(fn, Dict):
+            if fn is None:
+                raise WorkcellConfigFormatError(msg=fn)
+            # workcell config
+            self.name = fn.get("workcell_name")
+            self.provider = fn.get("workcell_provider")
+            self.workcell_id = fn.get("workcell_id")
+            self.version = fn.get("workcell_version")
+            self.runtime = fn.get("workcell_runtime")
+            self.entrypoint = fn.get("workcell_entrypoint")
+            self.code = fn.get("workcell_code")
+            self.image_uri = fn.get("workcell_code")["ImageUri"]
+            self.tags = fn.get("workcell_tags")
+            self.envs = fn.get("workcell_envs")
+            # get callable
+            self.function = get_callable(self.entrypoint)
+            self.import_string = self.entrypoint
+            # as-is config
+            self.config = fn
+        else:     
+            # get callable
+            if isinstance(fn, str):
+                # Try to load the function from a string notion
+                self.function = get_callable(fn)
+                self.import_string = fn
+            else:
+                self.function = fn
+                self.import_string = "app:" + str(self.function.__name__)
+            # callable validation
+            if not callable(self.function):
+                raise CallableTypeError(str(self.function))
+            if inspect.isclass(self.function):
+                raise CallableTypeError("The provided callable is an uninitialized Class. This is not allowed.")                                    
+            # workcell config
+            self.name = None
+            self.provider = provider
+            self.workcell_id = None
+            self.version = version
+            self.runtime = runtime
+            self.entrypoint = self.import_string
+            self.code = None
+            self.image_uri = image_uri # Note
+            self.tags = tags
+            self.envs = envs
+            # as-is config
+            self.config = None 
 
-        if not callable(self.function):
-            raise CallableTypeError(str(self.function))
-
-        if inspect.isclass(self.function):
-            raise CallableTypeError("The provided callable is an uninitialized Class. This is not allowed.")
-
-        # name, description, input_type, output_type,
+        # Properties: name, description, input_type, output_type,
         if inspect.isfunction(self.function):
             # The provided callable is a function
             self.input_type = get_input_type(self.function)
@@ -199,17 +216,19 @@ class Workcell:
         self.spec = get_spec(self.function)
 
         # Get config
-        self.config = gen_workcell_config(
-            import_string = self.import_string,
-            image_uri = self.image_uri,
-            workcell_version = self.version,
-            workcell_runtime = self.runtime, 
-            workcell_tags = str(self.tags),
-            workcell_env = str(self.envs)
-        ) 
-
-        # Get workcell_id
-        self.workcell_id = self.config['workcell_id']
+        if self.config is None:
+            self.config = gen_workcell_config(
+                import_string = self.import_string,
+                image_uri = self.image_uri,
+                workcell_version = self.version,
+                workcell_provider = self.provider,
+                workcell_runtime = self.runtime, 
+                workcell_tags = str(self.tags),
+                workcell_envs = str(self.envs),
+            )
+            # Get workcell_id
+            self.workcell_id = self.config['workcell_id']
+            self.code = self.config['workcell_code']
 
     def __call__(self, input: Any, **kwargs: Any) -> Any:
         input_obj = input

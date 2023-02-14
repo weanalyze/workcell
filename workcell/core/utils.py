@@ -3,13 +3,14 @@ import os
 import re
 import ast
 import json
+import yaml
 import inspect
 import importlib
 import dotenv
 import requests
 from urllib.parse import urlparse
 import posixpath
-from typing import List
+from typing import List, Dict
 
 from workcell.core.errors import (
     WorkcellConfigGenerateError,
@@ -209,8 +210,8 @@ def gen_workcell_config(
     workcell_version: str="latest",
     workcell_runtime: str="python3.8", 
     workcell_tags: str="{}",
-    workcell_env: str="{}"
-) -> str:
+    workcell_envs: str="{}"
+) -> Dict:
     """Prepare template folder for workcell.
     This will create a folder and package template in build_path.
     Args:
@@ -226,8 +227,8 @@ def gen_workcell_config(
             e.g. workcell_runtime = "python3.8" 
         workcell_tags (dict): workcell tags.
             e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}'
-        workcell_env (dict): workcell env.
-            e.g. workcell_env = '{"STAGE":"latest"}'
+        workcell_envs (dict): workcell env.
+            e.g. workcell_envs = '{"STAGE":"latest"}'
 
     Return:
         workcell_config (dict): build config for workcell.
@@ -273,11 +274,11 @@ def gen_workcell_config(
     except:
         raise WorkcellParamsFormatError(workcell_tags)
 
-    # workcell_env
+    # workcell_envs
     try:
-        workcell_env = ast.literal_eval(workcell_env) # useful tags
+        workcell_envs= ast.literal_eval(workcell_envs) # useful tags
     except:
-        raise WorkcellParamsFormatError(workcell_env)
+        raise WorkcellParamsFormatError(workcell_envs)
     
     # pack config
     workcell_config = {
@@ -289,7 +290,7 @@ def gen_workcell_config(
         "workcell_entrypoint": workcell_entrypoint, 
         "workcell_code": workcell_code,
         "workcell_tags": workcell_tags, 
-        "workcell_env": workcell_env,
+        "workcell_envs": workcell_envs,
     } 
     return workcell_config
 
@@ -298,31 +299,32 @@ def save_workcell_config(
     workcell_config: dict, 
     dest: str
 ) -> None:
-    """Save workcell config to a file.
+    """Save workcell config to a YAML file.
     Args:
         workcell_config (dict): build config for workcell.
         dest (str): path to save workcell config.
-            e.g. dest = ".workcell/workcell_config.json"
+            e.g. dest = ".workcell/workcell.yaml"
     Returns:
         None
     """
-    with open(dest, "w") as f:
-        json.dump(workcell_config, f, indent=4)
+    with open(dest, 'w') as f:
+        yaml.dump(workcell_config, f, default_flow_style=False, sort_keys=False)
     return None
 
 
 def load_workcell_config(
     src: str,
 ) -> None:
-    """Save workcell config to a file.
+    """Load workcell config from a YAML file.
     Args:
         src (str): path to load workcell config.
-            e.g. src = ".workcell/workcell_config.json"
+            e.g. src = ".workcell/workcell.yaml"
     Returns:
         None
     """
-    with open(src, "r") as f:
-        workcell_config = json.load(f)
+    with open(src) as f:
+        # use safe_load instead load
+        workcell_config = yaml.safe_load(f) 
     return workcell_config
 
 
