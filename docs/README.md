@@ -55,9 +55,9 @@ Args:
 
         e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}' 
 
-    workcell_env (dict): workcell env. 
+    workcell_envs (dict): workcell env. 
 
-        e.g. workcell_env = '{"STAGE":"latest"}' 
+        e.g. workcell_envs = '{"STAGE":"latest"}' 
 
 Return: 
 
@@ -81,13 +81,13 @@ $ build [OPTIONS] IMPORT_STRING
 * `-v, --version TEXT`: [default: latest]
 * `-r, --runtime TEXT`: [default: python3.8]
 * `--workcell_tags TEXT`: [default: {}]
-* `--workcell_env TEXT`: [default: {}]
+* `--workcell_envs TEXT`: [default: {}]
 * `--help`: Show this message and exit.
 
 ## `deploy`
 
 Deploy workcell.
-This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
+This will deploy workcell by workcell.yaml in buidl_dir. Must be running in project folder or given build_dir.
 
 Args: 
 
@@ -267,9 +267,9 @@ Args:
 
         e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}' 
 
-    workcell_env (dict): workcell env. 
+    workcell_envs (dict): workcell env. 
 
-        e.g. workcell_env = '{"STAGE":"latest"}' 
+        e.g. workcell_envs = '{"STAGE":"latest"}' 
 
 Return: 
 

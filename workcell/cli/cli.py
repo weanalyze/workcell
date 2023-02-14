@@ -3,6 +3,8 @@ import os
 import sys
 import dotenv
 import typer
+import yaml
+from pathlib import Path
 from typing import Tuple
 from workcell import __version__ as workcell_version
 from workcell.core.constants import (
@@ -26,7 +28,10 @@ from workcell.cli.builder import (
     init_workcell_build_dir, 
     init_workcell_project_dir
 )
-from workcell.cli.export import ExportFormat
+from workcell.cli.export import (
+    ExportFormat
+)
+from workcell.cli.utils import conf_callback
 
 """
 Set local project directory
@@ -88,29 +93,34 @@ def new(
 
 @cli.command()
 def serve(
-    workcell_path: str,
+    workcell_entrypoint: str,
+    config_path: Path = typer.Option(None, "--config", "-c", callback=conf_callback, is_eager=True),
     port: int = typer.Option(int(WORKCELL_SERVER_PORT), "--port", "-p"),
     host: str = typer.Option(str(WORKCELL_SERVER_NAME), "--host", "-h"),
 ) -> None:
     """Start a HTTP API server for the workcell.
     This will launch a FastAPI server based on the OpenAPI standard and with a automatic interactive documentation.
     """
-    launch_app(workcell_path, port, host)
-    # launch_app_socket(workcell_path, port, host)
+    if config_path:
+        workcell_config = yaml.load(config_path.read_text(), Loader=yaml.Loader)
+        launch_app(fn=workcell_config, host=host, port=port)
+    else:
+        launch_app(fn=workcell_entrypoint, host=host, port=port)
 
 @cli.command()
 def pack(
     import_string: str,
-    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),
+    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),    
+    image_uri: str = typer.Option("", "--image", "-t"), # if build docker image
     workcell_version: str = typer.Option("latest", "--version", "-v"),
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     workcell_tags: str = typer.Option("{}", "--workcell_tags"),
-    workcell_env: str = typer.Option("{}", "--workcell_env"),
+    workcell_envs: str = typer.Option("{}", "--workcell_envs"),
 ) -> Tuple[str, str]:
     """Prepare deployment image for workcell.
     This will create a deployment folder and build docker image. \n
     Args: \n
-        import_string (str): import_string, a.k.a workcell fqdn. \n
+        import_string (str): import_string, a.k.a workcell entrypoint. \n
             e.g. import_string = "app:hello_workcell" \n
         workcell_provider (str): workcell provider. \n
             e.g. workcell_provider = "huggingface" \n            
@@ -120,8 +130,8 @@ def pack(
             e.g. workcell_runtime = "python3.8" \n
         workcell_tags (dict): workcell tags. \n
             e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}' \n
-        workcell_env (dict): workcell env. \n
-            e.g. workcell_env = '{"STAGE":"latest"}' \n
+        workcell_envs (dict): workcell env. \n
+            e.g. workcell_envs = '{"STAGE":"latest"}' \n
     Return: \n
         build_dir (str): project build directory. \n
         workcell_config (dict): workcell configuration dict. \n
@@ -143,17 +153,18 @@ def pack(
     # generate workcell_config
     workcell_config = gen_workcell_config(
         import_string = import_string,
-        workcell_provider = workcell_provider, # workcell_provider in [ "huggingface", ...]
+        workcell_provider = workcell_provider, # workcell_provider in [ "huggingface", ...] 
+        image_uri = image_uri,
         workcell_version = workcell_version,
-        workcell_runtime = workcell_runtime, # workcell_runtime in [ "python3.8", ...]
+        workcell_runtime = workcell_runtime, # workcell_runtime in [ "python3.8", ...] 
         workcell_tags = workcell_tags,
-        workcell_env = workcell_env
+        workcell_envs = workcell_envs
     ) 
     # user project dir
     function_dir = os.getcwd() # "./{project_dir}"
     build_dir = safe_join(function_dir, ".workcell") # "{project_dir}/.workcell/"
     template_dir = safe_join(RUNTIME_FOLDER, f"{workcell_provider}/{workcell_runtime}") # ".../workcell/templates/runtime/huggingface/python3.8"
-    workcell_config_file = safe_join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"
+    workcell_config_file = safe_join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"
     # init project dir
     if os.path.exists(os.path.join(function_dir,'Dockerfile')):
         typer.secho("Dockerfile exists, will use user-defined docker image.", fg=typer.colors.GREEN, err=False)
@@ -183,7 +194,7 @@ def deploy(
     build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
 ) -> None:
     """Deploy workcell.
-    This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
+    This will deploy workcell by workcell.yaml in buidl_dir. Must be running in project folder or given build_dir.
     Args: \n
         provider (str): service provider, e.g. huggingface. \n
         build_dir (str): project build directory. \n
@@ -199,7 +210,7 @@ def deploy(
         return None 
     # load workcell_config
     workcell_config = load_workcell_config(
-        src = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
+        src = os.path.join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"  
     )
     # parse workcell_config to deplot resources
     # repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"), workcell_config['workcell_name'])
@@ -229,7 +240,7 @@ def up(
     workcell_version: str = typer.Option("latest", "--version", "-v"),
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     workcell_tags: str = typer.Option("{}", "--workcell_tags"),
-    workcell_env: str = typer.Option("{}", "--workcell_env"),
+    workcell_envs: str = typer.Option("{}", "--workcell_envs"),
 ) -> None:
     """Build->push->deploy a workcell to weanalyze cloud.
     This will create a deployment folder and build docker image. \n
@@ -244,8 +255,8 @@ def up(
             e.g. workcell_runtime = "python3.8" \n
         workcell_tags (dict): workcell tags. \n
             e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}' \n
-        workcell_env (dict): workcell env. \n
-            e.g. workcell_env = '{"STAGE":"latest"}' \n
+        workcell_envs(dict): workcell env. \n
+            e.g. workcell_envs = '{"STAGE":"latest"}' \n
     Return: \n
         build_dir (str): project build directory. \n
         workcell_config (dict): workcell configuration dict. \n
@@ -257,7 +268,7 @@ def up(
         workcell_version,
         workcell_runtime,
         workcell_tags,
-        workcell_env
+        workcell_envs
     ) 
     # Step2. Deploy
     deploy(build_dir)
@@ -268,7 +279,7 @@ def teardown(
     build_dir: str = typer.Option(".workcell", "--build_dir", "-b"),
 ) -> None:
     """Teardown workcell deployment.
-    This will deploy workcell by workcell_config.json in buidl_dir. Must be running in project folder or given build_dir.
+    This will deploy workcell by workcell.yaml in buidl_dir. Must be running in project folder or given build_dir.
     Args: \n
         build_dir (str): project build directory. \n
     Return: \n
@@ -283,7 +294,7 @@ def teardown(
         return None 
     # load workcell_config
     workcell_config = load_workcell_config(
-        src = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
+        src = os.path.join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"  
     )
     # parse workcell_config to deplot resources
     # repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
