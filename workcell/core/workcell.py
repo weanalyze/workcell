@@ -119,8 +119,11 @@ class Workcell:
         Returns:
             A workcell instance.
         """
+        # authentication
+        self._auth = auth        
         # property
-        self.name = None 
+        self.name = None # function name
+        self.title = None # title for api/ui
         self.provider = None         
         self.version = version # TODO: workcell function's version control & authentication
         self.description = None 
@@ -129,19 +132,18 @@ class Workcell:
         self.spec = None
         self.config = {}
         # workcell_config values
+        self.provider = "localhost" # localhost, huggingface, ...          
+        self.workcell_id = None
         self.import_string = None
         self.runtime = runtime
         self.image_uri = image_uri
         self.tags = tags
         self.envs = envs
-        # authentication
-        self._auth = auth
         # deploy related
+        self.favicon_path = None
+        self.is_share = False
         self.save_to = None # selenium test
-        self._favicon_path = None
-        self._is_share = False
-        self._provider = "localhost" # localhost, huggingface, ...
-
+        
         # Get callable
         if isinstance(fn, str):
             # Try to load the function from a string notion
@@ -162,7 +164,8 @@ class Workcell:
             # The provided callable is a function
             self.input_type = get_input_type(self.function)
             self.output_type = get_output_type(self.function)
-            self.name = name_to_title(self.function.__name__)
+            self.name = self.function.__name__
+            self.title = name_to_title(self.name)
             # Get description from function
             doc_string = inspect.getdoc(self.function)
             if doc_string:
@@ -172,7 +175,8 @@ class Workcell:
             # The provided callable is a function
             self.input_type = get_input_type(self.function.__call__)  # type: ignore
             self.output_type = get_output_type(self.function.__call__)  # type: ignore
-            self.name = name_to_title(type(self.function).__name__)
+            self.name = type(self.function).__name__
+            self.title = name_to_title(self.name)
             # Get description from function
             try:
                 doc_string = inspect.getdoc(self.function.__call__)  # type: ignore
@@ -203,6 +207,9 @@ class Workcell:
             workcell_tags = str(self.tags),
             workcell_env = str(self.envs)
         ) 
+
+        # Get workcell_id
+        self.workcell_id = self.config['workcell_id']
 
     def __call__(self, input: Any, **kwargs: Any) -> Any:
         input_obj = input

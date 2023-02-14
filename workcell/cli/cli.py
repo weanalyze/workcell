@@ -6,12 +6,15 @@ import typer
 from typing import Tuple
 from workcell import __version__ as workcell_version
 from workcell.core.constants import (
+    SUPPORT_PROVIDER,
+    SUPPORT_RUNTIME,
     SCAFFOLD_FOLDER, 
     RUNTIME_FOLDER, 
     WORKCELL_SERVER_NAME,
     WORKCELL_SERVER_PORT    
 )
 from workcell.core.utils import (
+    safe_join,
     gen_workcell_config, 
     save_workcell_config, 
     load_workcell_config, 
@@ -70,7 +73,7 @@ def version(
 @cli.command()
 def new(
     project_name: str,
-    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"), # "huggingface", "weanalyze"
+    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"), # "localhost", "huggingface", "weanalyze"
     workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r") # "python3.8", "python3.9"
 ) -> None:
     """Init a new workcell template.
@@ -123,11 +126,19 @@ def pack(
         build_dir (str): project build directory. \n
         workcell_config (dict): workcell configuration dict. \n
     """
+    # check if provider valid
+    if workcell_provider not in SUPPORT_PROVIDER:
+        typer.secho(f"Given provider: {workcell_provider} is not valid. Please choose from {SUPPORT_PROVIDER}!", fg=typer.colors.RED, err=True)
+        return None
+    # check if runtime valid
+    if workcell_runtime not in SUPPORT_RUNTIME:
+        typer.secho(f"Given runtime: {workcell_runtime} is not valid. Please choose from {SUPPORT_RUNTIME}!", fg=typer.colors.RED, err=True)
+        return None    
     # function name
     function_name = import_string.split(":")[1]
     # check if function_name exists in app.py
     if not valid_workcell_import_string(import_string):
-        typer.secho(f"Given function: {function_name} does not exists in app.py.", fg=typer.colors.RED, err=True)
+        typer.secho(f"Import function: {function_name} from app.py failed, check spelling or dependencies.", fg=typer.colors.RED, err=True)
         return None
     # generate workcell_config
     workcell_config = gen_workcell_config(
@@ -140,9 +151,9 @@ def pack(
     ) 
     # user project dir
     function_dir = os.getcwd() # "./{project_dir}"
-    template_dir = os.path.join(RUNTIME_FOLDER, workcell_provider, workcell_runtime) # ".../workcell/templates/runtime/huggingface/python3.8"
-    build_dir = os.path.join(os.getcwd(), ".workcell") # "{project_dir}/.workcell/"
-    workcell_config_file = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"
+    build_dir = safe_join(function_dir, ".workcell") # "{project_dir}/.workcell/"
+    template_dir = safe_join(RUNTIME_FOLDER, f"{workcell_provider}/{workcell_runtime}") # ".../workcell/templates/runtime/huggingface/python3.8"
+    workcell_config_file = safe_join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"
     # init project dir
     if os.path.exists(os.path.join(function_dir,'Dockerfile')):
         typer.secho("Dockerfile exists, will use user-defined docker image.", fg=typer.colors.GREEN, err=False)
@@ -191,7 +202,8 @@ def deploy(
         src = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
     )
     # parse workcell_config to deplot resources
-    repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
+    # repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"), workcell_config['workcell_name'])
+    repo_id = workcell_config['workcell_id']
     # huggingface hub api wrapper
     hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
     # check if exsists before create workspace
@@ -274,7 +286,8 @@ def teardown(
         src = os.path.join(build_dir, "workcell_config.json") # "{project_dir}/.workcell/workcell_config.json"  
     )
     # parse workcell_config to deplot resources
-    repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
+    # repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
+    repo_id = workcell_config['workcell_id']
     # huggingface hub api wrapper
     hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
     # check if exsists before teardown workspace
@@ -288,7 +301,7 @@ def teardown(
         repo_url = hf_wrapper.delete_space(repo_id=repo_id)
         typer.secho("✨ Workcell teardown complete!" + "\n"
                     + "Provider: {}".format(workcell_config['workcell_provider']) + "\n" 
-                    + "Original endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+                    + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
     except Exception as e:
         typer.secho("Failed to teardown space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
     return None

@@ -112,7 +112,6 @@ def validate_url(possible_url: str) -> bool:
 ########
 # Helper functions for workcell
 ########
-
 def name_to_title(
     name: str
 ) -> str:
@@ -186,6 +185,23 @@ def valid_workcell_import_string(
         return False 
 
 
+def valid_workcell_subdomain(
+    workcell_id: str
+) -> str:
+    """Prepare template folder for workcell.
+    This will create a folder and package template in build_path.
+    Args:
+        workcell_id (str): universal cross-infra workcell_id.
+            e.g. workcell_id = "jiandong/hello_workcell"
+
+    Return:
+        workcell_subdomain (str): universal cross-infra workcell_subdomain.   
+            e.g. workcell_subdomain = jiandong-hello-workcell
+    """
+    workcell_subdomain = "-".join(workcell_id.replace("_","-").split('/'))
+    return workcell_subdomain
+
+
 def gen_workcell_config(
     import_string: str,
     image_uri:  str="",
@@ -203,7 +219,7 @@ def gen_workcell_config(
         image_uri (str): docker image uri.
             e.g. image_uri = "weanalyze/hello_workcell:latest"        
         workcell_provider (str): workcell provider.
-            e.g. workcell_provider = "huggingface"                
+            e.g. workcell_provider = "localhost", "huggingface"          
         workcell_version (str): workcell version.
             e.g. workcell_version = "latest"
         workcell_runtime (str): workcell runtime.
@@ -216,7 +232,7 @@ def gen_workcell_config(
     Return:
         workcell_config (dict): build config for workcell.
     """
-    # extract workcell_config
+    # transparent workcell_config
     try:
         workcell_entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
         workcell_name = workcell_entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell" 
@@ -224,32 +240,50 @@ def gen_workcell_config(
         workcell_runtime = workcell_runtime # "python3.8" | "python3.9" | "nodejs14.x" | "nodejs12.x"
     except Exception as e:
         raise WorkcellConfigGenerateError(e)
-    # workcell code
+    
+    # workcell_id
     try:
-        ## TODO: add Docker Hub username support
-        # if image_uri == "":
-        #     # default build tag: {username}/{workcell_name}:{workcell_version}
-        #     image_uri = "{}/{}:{}".format(username, workcell_name, workcell_version) 
-        ## ready to deploy
+        if workcell_provider == "localhost":
+            workcell_id = "{}/{}".format("localhost", workcell_name)
+        elif workcell_provider == "huggingface":
+            workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
+        elif workcell_provider == "weanalyze":
+            workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
+        else:
+            raise WorkcellParamsFormatError(msg=workcell_provider)
+    except:
+        pass
+    
+    # workcell_code
+    try:
+        # TODO: add Docker Hub username support
+        if image_uri == "" and os.getenv("DOCKERHUB_USERNAME"):
+            # default build tag: {dockerhub_username}/{workcell_name}:{workcell_version}
+            image_uri = "{}/{}:{}".format(os.getenv("DOCKERHUB_USERNAME"), workcell_name, workcell_version)
+        # ready to deploy
         workcell_code = {
             "ImageUri": image_uri
         }
     except:
-        raise WorkcellParamsFormatError(workcell_code)        
-    # workcell tags
+        raise WorkcellParamsFormatError(msg="workcell_id")
+
+    # workcell_tags
     try:
         workcell_tags = ast.literal_eval(workcell_tags) # useful tags
     except:
         raise WorkcellParamsFormatError(workcell_tags)
-    # workcell env
+
+    # workcell_env
     try:
         workcell_env = ast.literal_eval(workcell_env) # useful tags
     except:
         raise WorkcellParamsFormatError(workcell_env)
+    
     # pack config
     workcell_config = {
         "workcell_name": workcell_name, 
-        "workcell_provider": workcell_provider,         
+        "workcell_provider": workcell_provider,   
+        "workcell_id": workcell_id,              
         "workcell_version": workcell_version, 
         "workcell_runtime": workcell_runtime, 
         "workcell_entrypoint": workcell_entrypoint, 
@@ -292,3 +326,18 @@ def load_workcell_config(
     return workcell_config
 
 
+def colab_check() -> bool:
+    """
+    Check if workcell is deploy to huggingface
+    :return is_colab (bool): True or False
+    """
+    is_colab = False
+    try:  # Check if running interactively using ipython.
+        from IPython import get_ipython
+
+        from_ipynb = get_ipython()
+        if "google.colab" in str(from_ipynb):
+            is_colab = True
+    except (ImportError, NameError):
+        pass
+    return is_colab
