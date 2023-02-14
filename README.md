@@ -200,7 +200,7 @@ Please stay tuned, as a comprehensive guide will be available soon to provide fu
 
 🙋🏻 If you want to say hi, or are interested in partnering with us, feel free to reach us at: contact@weanalyze.co
 
-😆 Feel free to share memes or any questions at Discord: https://discord.gg/jZuDU5mQZ7
+😆 Feel free to share memes or any questions at Discord: https://discord.weanalyze.co
 
 ## License
 
