@@ -1,0 +1,11 @@
+workcell_name: "hello_workcell"
+workcell_provider: "huggingface"
+workcell_id: ""
+workcell_version: "latest"
+workcell_runtime: "python3.8"
+workcell_entrypoint: "app:hello_workcell"
+workcell_code:
+  ImageUri: ""
+  ImageRegistry: "docker.io"
+workcell_tags: {}
+workcell_envs: {}

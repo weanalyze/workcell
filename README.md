@@ -176,7 +176,7 @@ You can monitor the deployment process and the logs in your terminal, and the de
 
 You can deploy multiple workcells, and they will be listed in your Hugging Face Spaces account, you can manage and remove them from there.
 
-You can also configure various deployment options like environment variables, system requirements, custom domain, etc., by using command line options or a `workcell_config.json` from `.workcell` dir in your project folder. 
+You can also configure various deployment options like environment variables, system requirements, custom domain, etc., by using command line options or a `workcell.yaml` from `.workcell` dir in your project folder. 
 
 Please stay tuned, as a comprehensive guide will be available soon to provide further explanation.
 

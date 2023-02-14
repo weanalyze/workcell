@@ -7,7 +7,6 @@ import requests
 def get_hf_host(
     space_name: str, 
     api_key: str | None, 
-    alias: str | None, 
     **kwargs
 ) -> str:
     # fetching url

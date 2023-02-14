@@ -15,6 +15,13 @@ class Error(Exception):
     def __str__(self):
         return repr(self.message)
 
+class WorkcellConfigFormatError(Error):
+    """Raised when a Workcell config format invalid."""
+    def __init__(self, msg):
+        super().__init__(
+            f"The workcell config format invalid: {msg}. "
+        )
+
 class WorkcellConfigGenerateError(Error):
     """Raised when a Workcell config generated failed."""
     def __init__(self, msg):

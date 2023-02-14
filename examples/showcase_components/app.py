@@ -3,7 +3,6 @@ from enum import Enum
 from typing import Dict, List, Optional, Set
 from pydantic import BaseModel, Field, SecretStr
 from workcell.integrations.types import FileContent
-import workcell
 
 
 class SelectionValue(str, Enum):
@@ -83,6 +82,3 @@ def showcase_components(input: ShowcaseModel) -> ShowcaseModel:
     This function only returns the input data.
     """
     return input
-
-
-app = workcell.create_app(showcase_components)

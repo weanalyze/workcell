@@ -5,7 +5,7 @@ from mangum import Mangum
 
 
 # load workcell_config
-with open("./workcell_config.json", "r") as f:
+with open("./workcell.yaml", "r") as f:
     workcell_config = json.load(f)
 # load openapi prefix
 openapi_prefix = "{}/{}".format(workcell_config['username'], workcell_config['workcell_name'])
