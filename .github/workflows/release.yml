@@ -32,10 +32,12 @@ jobs:
         run: |
           [[ "$(poetry version --short)" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]] || echo prerelease=true >> $GITHUB_OUTPUT
       - name: Create Release
+        id: create-release
         uses: ncipollo/release-action@v1
         with:
-          artifacts: "dist/*"
           token: ${{ secrets.GITHUB_TOKEN }}
+          artifacts: "dist/*"
+          generateReleaseNotes: true
           draft: false
           prerelease: steps.check-version.outputs.prerelease == 'true'
 
