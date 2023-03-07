@@ -87,8 +87,12 @@ def new(
     # user project dir
     project_dir = os.path.join(os.getcwd(), project_name) # "./{project_dir}"
     scaffold_dir = os.path.join(SCAFFOLD_FOLDER, workcell_provider, workcell_runtime) # ".../workcell/templates/scaffold/huggingface/python3.8"
-    init_workcell_project_dir(project_dir, scaffold_dir)
-    typer.secho(f'Workcell project_dir created: {project_dir}', fg=typer.colors.GREEN, err=False)
+    try:
+        init_workcell_project_dir(project_dir, scaffold_dir)
+        typer.secho(f'Workcell project_dir created: {project_dir}', fg=typer.colors.GREEN, err=False)
+    except:
+        typer.secho(f'Workcell project_dir created failed! ', fg=typer.colors.RED, err=True)
+        raise 
     return None
 
 @cli.command()
@@ -106,6 +110,32 @@ def serve(
         launch_app(fn=workcell_config, host=host, port=port)
     else:
         launch_app(fn=workcell_entrypoint, host=host, port=port)
+
+@cli.command()
+def hello() -> None:
+    """Say hello to workcell.
+    This will create a `hello_workcell` project dir and serve it.
+    """
+    # init a template project dir
+    try:
+        new(
+            project_name='hello_workcell',
+            workcell_provider='huggingface',
+            workcell_runtime='python3.8'
+        )
+    except:
+        return None 
+    # serve a workcell
+    try:
+        serve(
+            workcell_entrypoint='hello_workcell.app:hello_workcell',
+            config_path=None,
+            port=int(WORKCELL_SERVER_PORT),
+            host=str(WORKCELL_SERVER_NAME)
+        )
+    except:
+        return None
+    return None
 
 @cli.command()
 def pack(
