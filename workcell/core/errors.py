@@ -47,7 +47,7 @@ class WorkcellParamsFormatError(Error):
     """Raised when a Workcell parameters is not valid."""
     def __init__(self, msg):
         super().__init__(
-            f"The workcell config params generate failed: {msg}, params should be wrapped as string, or there're something missing (username/provider etc.). "
+            f"The workcell config params generate failed: {msg}, params should be wrapped as string, or there're something missing (username/provider/environment variable etc.). "
         )
 
 class WorkcellParamsMissingError(Error):

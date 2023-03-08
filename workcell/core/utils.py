@@ -247,9 +247,15 @@ def gen_workcell_config(
         if workcell_provider == "localhost":
             workcell_id = "{}/{}".format("localhost", workcell_name)
         elif workcell_provider == "huggingface":
-            workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
+            if os.environ.get('HUGGINGFACE_USERNAME'):
+                workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
+            else:
+                raise WorkcellParamsFormatError(msg=workcell_provider)
         elif workcell_provider == "weanalyze":
-            workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
+            if os.environ.get('WEANALYZE_USERNAME'):
+                workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
+            else:
+                raise WorkcellParamsFormatError(msg=workcell_provider)
         else:
             raise WorkcellParamsFormatError(msg=workcell_provider)
     except:

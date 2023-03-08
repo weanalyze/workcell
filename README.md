@@ -68,15 +68,33 @@ Python 3.8+
 
 To get started with Workcell, you can install it using `pip`:
 
-Recomended: First activate your virtual environment, with your favourite system. For example, we like poetry and conda!
-
 ```bash
 pip install workcell
 ```
 
-## Getting Started
+## Quick Start
 
-Here is an example of a simple Workcell-compatible function:
+After workcell installed, just run:
+
+```bash
+workcell hello
+```
+
+You can find an automatically generated [Swagger UI](https://github.com/swagger-api/swagger-ui) from `http://127.0.0.1:7860/docs`
+
+And then just goto `http://127.0.0.1:7860/ui` to try your first workcell app:) 
+
+## Guides
+
+What happened? Workcell has created a FastAPI service and a lightweight user interface for your functions without any additional API or UI-related code. This service is ready to be deployed to the cloud as a public service, requiring minimal setup on your end. 
+
+With Workcell, you can focus on developing your core functionality while leaving the infrastructure and deployment details to the platform.
+
+All you need is to make sure your function is **workcell compatible**.
+
+_💡Note: A workcell-compatible function must have an `input` parameter and return value based on [Pydantic models](https://pydantic-docs.helpmanual.io/). The input and output models are specified using [type hints](https://docs.python.org/3/library/typing.html)._
+
+Here is an example of a simple **workcell compatible** function:
 
 ```python
 from pydantic import BaseModel
@@ -92,9 +110,7 @@ def hello_workcell(input: Input) -> Output:
     return Output(message=input.message)
 ```
 
-_💡Note: A workcell-compatible function must have an `input` parameter and return value based on [Pydantic models](https://pydantic-docs.helpmanual.io/). The input and output models are specified using [type hints](https://docs.python.org/3/library/typing.html)._
-
-To start a Workcell app, follow these steps:
+To start a workcell app, follow these steps:
 
 1. Copy the above code to a file named `app.py`.
 
@@ -102,13 +118,11 @@ To start a Workcell app, follow these steps:
 
 3. Open your terminal and navigate to the folder `hello_workcell`.
 
-4. Start the Workcell app using the following command: 
+4. Start the workcell app using the following command: 
 
 ```bash
 workcell serve app:hello_workcell
 ```
-
-_💡Note: The output will display the location where the API is being served on your local machine._
 
 Alternatively, you can import the `workcell` package and serve your function using an ASGI web server such as [Uvicorn](http://www.uvicorn.org/) or [FastAPI](https://fastapi.tiangolo.com/). Simply wrap your function with `workcell.create_app` like this:
 
@@ -136,7 +150,7 @@ uvicorn app:app --host 0.0.0.0 --port 7860
 ```
 _💡Note: The output will display the location where the API is being served on your local machine._
 
-## Workcell deployment
+## Deployment
 
 🤗 You can deploy your workcell to Hugging Face [Spaces](https://huggingface.co/spaces/launch) in 1-click! You'll be able to access your workcell from anywhere and share it with your team and collaborators.
 
@@ -153,16 +167,16 @@ Replace `{huggingface_username}` with your actual Hugging Face username, and `{h
 
 ### **Deploy Workcell**
 
-1. Wrap your function with `workcell.create_app` like example above.
+1. Prepare you **workcell compatible** function.
 
-2. In your project folder, package your Workcell app using the following command:
+2. In your project folder, package your workcell app using the following command:
 
 ```bash
 workcell pack app:hello_workcell
 ```
 _💡Note: `workcell pack {file_name}:{create_app_name}` will package your function code with a `Dockerfile` template into `.workcell` folder in your project folder._
 
-3. Once packaged, deploy your Workcell app using the following command:
+3. Once packaged, deploy your workcell app using the following command:
 
 ```bash
 workcell deploy
@@ -170,19 +184,13 @@ workcell deploy
 
 Voila! The deployment process will start, and within a few minutes, your workcell will be available on Hugging Face Spaces, accessible by a unique URL. 
 
-### **More details**
+## Documents
 
-You can monitor the deployment process and the logs in your terminal, and the deployment status will be shown in your Hugging Face Spaces repo.
-
-You can deploy multiple workcells, and they will be listed in your Hugging Face Spaces account, you can manage and remove them from there.
-
-You can also configure various deployment options like environment variables, system requirements, custom domain, etc., by using command line options or a `workcell.yaml` from `.workcell` dir in your project folder. 
-
-Please stay tuned, as a comprehensive guide will be available soon to provide further explanation.
+You can find more tutorials in [documents](https://weanalyze.github.io/workcell-docs/docs/quick-start).
 
 ## Examples
 
-🎮 Get inspired and learn more about Workcell by exploring our examples:
+🎮 Get inspired and learn more about workcell by exploring our examples:
 
 - https://github.com/weanalyze/workcell-examples
 
