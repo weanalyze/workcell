@@ -101,17 +101,6 @@ pip install workcell
     ```
     _在命令行的输出中, 可以看到本地后端服务的地址_
 
-4. 一行代码运行前端UI, 目前基于Streamlit实现:
-
-    ```bash
-    workcell serve-ui app:hello_workcell
-    ```
-    _在命令行的输出中, 可以看到本地UI服务的地址_
-
-5. **一键将workcell部署到weanalyze云端:**
-
-   🚧 完善中, 即将上线...
-
 ## 使用示例
 
 💡 通过 [examples](https://github.com/weanalyze/workcell/tree/main/examples) 学习更多使用场景, 并获取灵感.
@@ -126,7 +115,7 @@ pip install workcell
 
 🙋🏻 如果你想和我们打个招呼, 或者对与我们沟通合作感兴趣, 欢迎通过contact邮箱联系我们: contact@weanalyze.co
 
-😆 如果你想和开发团队以及开源社区爱好者分享你的见解和表情包, 欢迎加入discord社群: https://discord.gg/jZuDU5mQZ7
+😆 如果你想和开发团队以及开源社区爱好者分享你的见解和表情包, 欢迎加入discord社群: https://discord.weanalyze.co
 
 ## 开源协议
 
