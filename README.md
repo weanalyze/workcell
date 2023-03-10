@@ -40,7 +40,7 @@ Instantly turn your Python function into delightful app and production-ready mic
 
 ---
 
-## Highlights
+## ⚡ Highlights
 
 - 🔌  Instantly turn functions into microservices within seconds.
 - 📈  Automatically generate user-friendly UI for interaction.
@@ -49,7 +49,7 @@ Instantly turn your Python function into delightful app and production-ready mic
 - 🧩  Empower development and analysis with scalable components.
 - 🦄  Get inspired by the open-source community.
 
-## Status
+## ⏰ Status
 
 | Status | Stability | Goal |
 | ------ | ------ | ---- |
@@ -60,155 +60,120 @@ Instantly turn your Python function into delightful app and production-ready mic
 
 We are currently in: **Alpha**. 
 
-## Requirements
+## 🔖 Installation
 
-Python 3.8+
+- [Python](https://www.python.org/) version 3.8+
 
-## Installation
+- Install Workcell using `pip`:
 
-To get started with Workcell, you can install it using `pip`:
+    ```bash
+    pip install workcell
+    ```
 
-```bash
-pip install workcell
-```
+- Or using [Anaconda](http://anaconda.org/):
 
-## Quick Start
+    ```bash
+    conda install workcell
+    ```
 
-After workcell installed, just run:
+## 🚀 Quick Start
 
-```bash
-workcell hello
-```
+- After workcell installed, just run:
 
-You can find an automatically generated [Swagger UI](https://github.com/swagger-api/swagger-ui) from `http://127.0.0.1:7860/docs`
+    ```bash
+    workcell hello
+    ```
 
-And then just goto `http://127.0.0.1:7860/ui` to try your first workcell app:) 
+- You can find an automatically generated [Swagger UI](https://github.com/swagger-api/swagger-ui) from `http://127.0.0.1:7860/docs`, then just goto `http://127.0.0.1:7860/ui` to try your first workcell app:) 
 
-## Guides
+## 📚 Guide
 
-What happened? Workcell has created a FastAPI service and a lightweight user interface for your functions without any additional API or UI-related code. This service is ready to be deployed to the cloud as a public service, requiring minimal setup on your end. 
+- What happened? 
 
-With Workcell, you can focus on developing your core functionality while leaving the infrastructure and deployment details to the platform.
+    Workcell has created a FastAPI service and a lightweight user interface for your functions without any additional API or UI-related code. This service is ready to be deployed to the cloud as a public service, requiring minimal setup on your end. 
 
-All you need is to make sure your function is **workcell compatible**.
+- Speed up your development
 
-_💡Note: A workcell-compatible function must have an `input` parameter and return value based on [Pydantic models](https://pydantic-docs.helpmanual.io/). The input and output models are specified using [type hints](https://docs.python.org/3/library/typing.html)._
+    With Workcell, you can focus on developing your core functionality while leaving the infrastructure and deployment details to the platform. All you need is to make sure your function is **workcell compatible**.
 
-Here is an example of a simple **workcell compatible** function:
+- **Workcell compatible**
 
-```python
-from pydantic import BaseModel
+    A workcell-compatible function must have an `input` and `output` parameter and return value based on [Pydantic models](https://pydantic-docs.helpmanual.io/). The `input` and `output` are specified using [type hints](https://docs.python.org/3/library/typing.html).
 
-class Input(BaseModel):
-    message: str
+    Here is an example of a simple **workcell compatible** function:
 
-class Output(BaseModel):
-    message: str
+    ```python title=app.py
+    from pydantic import BaseModel
 
-def hello_workcell(input: Input) -> Output:
-    """Returns the `message` of the input data."""
-    return Output(message=input.message)
-```
+    class Input(BaseModel):
+        message: str
 
-To start a workcell app, follow these steps:
+    class Output(BaseModel):
+        message: str
 
-1. Copy the above code to a file named `app.py`.
+    def hello_workcell(input: Input) -> Output:
+        """Returns the `message` of the input data."""
+        return Output(message=input.message)
+    ```
 
-2. Create a folder, e.g. `hello_workcell`, and place the `app.py` inside.
+## 🤗 Deployment
 
-3. Open your terminal and navigate to the folder `hello_workcell`.
+- Why deployment?
 
-4. Start the workcell app using the following command: 
+    You'll be able to access your workcell from anywhere and share it with your team and collaborators. Now you can deploy workcell to Hugging Face [Spaces](https://huggingface.co/spaces/launch) in 1-click! 
 
-```bash
-workcell serve app:hello_workcell
-```
+- **Prepare your Hugging Face account**
 
-Alternatively, you can import the `workcell` package and serve your function using an ASGI web server such as [Uvicorn](http://www.uvicorn.org/) or [FastAPI](https://fastapi.tiangolo.com/). Simply wrap your function with `workcell.create_app` like this:
+    First you need a Hugging Face account, and prepare a [User Access Tokens](https://huggingface.co/settings/tokens), then set environment variables like below:
 
-```python
-from pydantic import BaseModel
-import workcell
+    ```bash
+    export HUGGINGFACE_USERNAME={huggingface_username}
+    export HUGGINGFACE_TOKEN={huggingface_token}
+    ```
 
-class Input(BaseModel):
-    message: str
+    Replace `{huggingface_username}` and `{huggingface_token}` with yours.
+    
+    You can also store these environment variables in a `.env` file in your project folder for convenience.
 
-class Output(BaseModel):
-    message: str
+- **Deploy in 1-click!**    
 
-def hello_workcell(input: Input) -> Output:
-    """Returns the `message` of the input data."""
-    return Output(message=input.message)
+    Once you prepared a **workcell compatible** function (or project), just run:
 
-app = workcell.create_app(hello_workcell)
-```
+    ```bash
+    workcell up app:hello_workcell
+    ```
 
-Finally, run the app using the following command:
+    Voila! The deployment process will start, and within a few minutes, workcell will be available on your Hugging Face Spaces.
 
-```bash
-uvicorn app:app --host 0.0.0.0 --port 7860
-```
-_💡Note: The output will display the location where the API is being served on your local machine._
+- **Extra explain**    
 
-## Deployment
+    When you run `workcell up`, there're actually 2 seperate step `workcell pack` and `workcell deploy` been applied. 
+    
+    `workcell pack` will package your function code with a template into `.workcell` under your project folder, and `workcell deploy` will upload this folder to cloud.
 
-🤗 You can deploy your workcell to Hugging Face [Spaces](https://huggingface.co/spaces/launch) in 1-click! You'll be able to access your workcell from anywhere and share it with your team and collaborators.
+## 📖 Documents
 
-### **Prepare your Hugging Face account**
+- You can find more details in our [documents](https://weanalyze.github.io/workcell-docs/docs/quick-start).
 
-First you need a Hugging Face account, and prepare your Hugging Face username and [User Access Tokens](https://huggingface.co/settings/tokens), then set environment variables like below:
+## 🎮 Examples
 
-```bash
-export HUGGINGFACE_USERNAME={huggingface_username}
-export HUGGINGFACE_TOKEN={hf_XXX}
-```   
+- Get inspired and learn more about workcell by exploring our examples:
+    -  https://github.com/weanalyze/workcell-examples
 
-Replace `{huggingface_username}` with your actual Hugging Face username, and `{hf_XXX}` with your actual User Access Token. You can also store these environment variables in a `.env` file in your project folder for convenience.
+- We also have a curated list for you to check out, feel free to contribute!
+    - https://github.com/weanalyze/best-of-workcell
 
-### **Deploy Workcell**
+## 🛣️ Roadmap
 
-1. Prepare you **workcell compatible** function.
+- Missing a feature? Have a look at our [public roadmap](https://github.com/orgs/weanalyze/projects/5/) to see what the team is working on in the short and medium term. Still missing it? Please let us know by opening an issue!
 
-2. In your project folder, package your workcell app using the following command:
+## 😆 Contacts
 
-```bash
-workcell pack app:hello_workcell
-```
-_💡Note: `workcell pack {file_name}:{create_app_name}` will package your function code with a `Dockerfile` template into `.workcell` folder in your project folder._
+- If you have any questions about the workcell or weanalyze , feel free to email us at: support@weanalyze.co
 
-3. Once packaged, deploy your workcell app using the following command:
+- If you want to say hi, or are interested in partnering with us, feel free to reach us at: contact@weanalyze.co
 
-```bash
-workcell deploy
-```
-
-Voila! The deployment process will start, and within a few minutes, your workcell will be available on Hugging Face Spaces, accessible by a unique URL. 
-
-## Documents
-
-You can find more tutorials in [documents](https://weanalyze.github.io/workcell-docs/docs/quick-start).
-
-## Examples
-
-🎮 Get inspired and learn more about workcell by exploring our examples:
-
-- https://github.com/weanalyze/workcell-examples
-
-🏆 We also have a curated list for you to check out, feel free to contribute!
-
-- https://github.com/weanalyze/best-of-workcell
-
-## Roadmap
-
-🗓️ Missing a feature? Have a look at our [public roadmap](https://github.com/orgs/weanalyze/projects/5/) to see what the team is working on in the short and medium term. Still missing it? Please let us know by opening an issue!
-
-## Contacts
-
-❓ If you have any questions about the workcell or weanalyze , feel free to email us at: support@weanalyze.co
-
-🙋🏻 If you want to say hi, or are interested in partnering with us, feel free to reach us at: contact@weanalyze.co
-
-😆 Feel free to share memes or any questions at Discord: https://discord.weanalyze.co
+- Feel free to share memes or any questions at Discord: https://discord.weanalyze.co
 
 ## License
 
