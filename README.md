@@ -147,9 +147,7 @@ We are currently in: **Alpha**.
 
 - **Extra explain**    
 
-    When you run `workcell up`, there're actually 2 seperate step `workcell pack` and `workcell deploy` been applied. 
-    
-    `workcell pack` will package your function code with a template into `.workcell` under your project folder, and `workcell deploy` will upload this folder to cloud.
+    When you run `workcell up`, there're actually 2 seperate step `workcell pack` and `workcell deploy` been applied. `workcell pack` will package your function code with a template into `.workcell` under your project folder, and `workcell deploy` will upload this folder to cloud.
 
 ## 📖 Documents
 
