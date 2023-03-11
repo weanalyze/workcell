@@ -5,3 +5,4 @@ from .pandas import PandasDataFrame
 from .plotly import PlotlyPlot
 from .altair import AltairPlot
 from .svg import SVG
+from .markdown import MarkdownMixin
