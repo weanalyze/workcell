@@ -4,6 +4,7 @@
 .DS_Store
 test
 # Misc
+.vscode
 .env.local
 .env.development.local
 .env.test.local
@@ -11,9 +12,9 @@ test
 
 ## Docusaurus 
 # Dependencies
-/node_modules
+node_modules
 # Production
-/build
+build
 # Generated files
 .docusaurus
 .cache-loader
