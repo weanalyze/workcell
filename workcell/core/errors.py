@@ -1,5 +1,4 @@
 from typing import Any, List, Set
-from colorama import Fore, Style
 
 
 ###############
