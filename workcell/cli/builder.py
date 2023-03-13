@@ -2,7 +2,6 @@ import os
 import shutil
 import zipfile
 import typer
-import docker
 from workcell.core.errors import DockerBuildError
 
 
@@ -155,38 +154,6 @@ def init_workcell_build_dir(
     return None
 
 
-def image_builder(src: str, image_uri: str, client: docker.APIClient = None) -> None:
-    """Wrap user function in template
-    Args:
-        src (str): path contains Dockerfile to wrap user function into build folder.
-            e.g. build_path = "./build/hello-workcell"
-        image_uri (str): docker image uri.
-            e.g. tags = "weanalyze/workcell:latest"
-    Returns:
-        None: docker images.
-    """
-    # check docker client
-    if client is None:
-        # client = docker.from_env()
-        client = docker.APIClient()
-    # docker build path
-    typer.echo("Building docker path: {}".format(src))
-    log_generator = client.build(path=src, tag=image_uri, decode=True)
-    log_docker_output(log_generator, "Build workcell docker image: {}".format(image_uri))
-
-
-def image_pusher(repository: str, client: docker.APIClient = None) -> None:
-    """Push docker image to docker hub
-    """
-    # check docker client
-    if client is None:
-        # client = docker.from_env()
-        client = docker.APIClient()
-    # docker push
-    log_generator = client.push(repository=repository, stream=True, decode=True)
-    log_docker_output(log_generator, "Pushing workcell docker image to docker hub: {}".format(repository))
-
-
 def log_subprocess_output(pipe):
     """
     Log output to console from a generator returned from subprocess
@@ -195,27 +162,3 @@ def log_subprocess_output(pipe):
     for line in iter(pipe.readline, b''): # b'\n'-separated lines
         typer.echo(f'Running subprocess command: {line.decode("utf-8").strip()}. ')
 
-
-def log_docker_output(generator, task_name: str = 'docker command execution') -> None:
-    """
-    Log output to console from a generator returned from docker client
-    :param Any generator: The generator to log the output of
-    :param str task_name: A name to give the task, i.e. 'Build database image', used for logging
-    """
-    while True:
-        try:
-            output = generator.__next__()
-            if 'stream' in output:
-                if output['stream'] != '\n':
-                    output_str = output['stream'].strip('\r\n').strip('\n')
-                    typer.echo(output_str)
-            elif 'error' in output:
-                typer.secho(f'Error from {task_name}, error: \"{output["error"]}\"', fg=typer.colors.RED, err=True)
-                raise DockerBuildError(output["error"])
-            else:
-                pass
-        except StopIteration:
-            typer.secho(f'{task_name} complete.', fg=typer.colors.GREEN, err=False)
-            break
-        except ValueError:
-            typer.secho(f'Error parsing output from {task_name}: \"{output}\"', fg=typer.colors.RED, err=True)
