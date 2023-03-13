@@ -243,23 +243,20 @@ def gen_workcell_config(
         raise WorkcellConfigGenerateError(e)
     
     # workcell_id
-    try:
-        if workcell_provider == "localhost":
-            workcell_id = "{}/{}".format("localhost", workcell_name)
-        elif workcell_provider == "huggingface":
-            if os.environ.get('HUGGINGFACE_USERNAME'):
-                workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
-            else:
-                raise WorkcellParamsFormatError(msg=workcell_provider)
-        elif workcell_provider == "weanalyze":
-            if os.environ.get('WEANALYZE_USERNAME'):
-                workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
-            else:
-                raise WorkcellParamsFormatError(msg=workcell_provider)
+    if workcell_provider == "localhost":
+        workcell_id = "{}/{}".format("localhost", workcell_name)
+    elif workcell_provider == "huggingface":
+        if os.environ.get('HUGGINGFACE_USERNAME'):
+            workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
         else:
             raise WorkcellParamsFormatError(msg=workcell_provider)
-    except:
-        pass
+    elif workcell_provider == "weanalyze":
+        if os.environ.get('WEANALYZE_USERNAME'):
+            workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
+        else:
+            raise WorkcellParamsFormatError(msg=workcell_provider)
+    else:
+        raise WorkcellParamsFormatError(msg=workcell_provider)
     
     # workcell_code
     try:
