@@ -103,12 +103,15 @@ def create_workcell_app(workcell: Workcell) -> App:
     ###############
 
     # Redirect to docs
-    @app.get(
-        "/", 
-        include_in_schema=False
+    @app.get("/", include_in_schema=False
     )
     async def root() -> Any:
-        return RedirectResponse("./docs")
+        return RedirectResponse("./ui")
+    
+    # Docs
+    @app.get("/docs", include_in_schema=False)
+    async def docs() -> Any:
+        return RedirectResponse("./docs")    
 
     # UI
     @app.get("/ui", response_class=HTMLResponse)
