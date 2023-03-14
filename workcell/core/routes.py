@@ -182,7 +182,7 @@ def create_workcell_app(workcell: Workcell) -> App:
     )
     async def spec() -> Any:  # type: ignore
         """Returns informational metadata about this Workcell."""
-        return {"spec":workcell.spec}
+        return {"spec":workcell.spec, "info":workcell.description}
     return app
 
 
