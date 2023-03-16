@@ -54,11 +54,13 @@ Instantly turn your Python function into delightful app and production-ready mic
 | Status | Stability | Goal |
 | ------ | ------ | ---- |
 | ✅ | Alpha | We are testing Workcell with a closed set of customers |
-| 🚧 | Public Alpha | Anyone can sign up over at weanalyze.co. But go easy on us, there are a few kinks. |
-| ❌ | Public Beta | Stable enough for most non-enterprise use-cases |
+| ✅ | Public Alpha | Anyone can sign up over at weanalyze.co. But go easy on us, there are a few kinks. |
+| 🚧 | Public Beta | Stable enough for most non-enterprise use-cases |
 | ❌ | Public | Production-ready |
 
-We are currently in: **Alpha**. 
+We are currently in: **Public Alpha**.
+
+Wokrlcell is heavily under development, and we expect to iterate on the APIs/UIs before reaching beta (version 0.1.0).
 
 ## 🔖 Installation
 
