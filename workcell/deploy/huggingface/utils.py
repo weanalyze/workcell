@@ -10,8 +10,8 @@ def get_hf_host(
     **kwargs
 ) -> str:
     # fetching url
-    space_url = "https://huggingface.co/spaces/{}".format(space_name)
-    host_url = "https://huggingface.co/api/spaces/{}/host".format(space_name)
+    # space_url = "https://huggingface.co/spaces/{}".format(space_name)
+    host_url = "https://huggingface.co/api/spaces/{}".format(space_name)
 
     # headers
     headers = {}
@@ -21,7 +21,8 @@ def get_hf_host(
     # requests
     resp = requests.get(host_url, headers=headers).json()
     # extract host
-    subdomain, host = resp.get("subdomain"), resp.get("host")
+    # subdomain = resp.get("subdomain")
+    host = resp.get("host")
 
     if host is None:
         raise ValueError(
