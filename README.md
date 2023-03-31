@@ -153,7 +153,7 @@ Wokrlcell is heavily under development, and we expect to iterate on the APIs/UIs
 
 ## 📖 Documents
 
-- You can find more details in our [documents](https://weanalyze.github.io/workcell-docs/docs/quick-start).
+- You can find more details in our [documents](https://weanalyze.github.io/workcell/docs/quick-start).
 
 ## 🎮 Examples
 
