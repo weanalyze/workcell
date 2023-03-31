@@ -121,19 +121,18 @@ def create_workcell_app(workcell: Workcell) -> App:
             # template = WORKCELL_UI_TEMPLATE
             template = "frontend/index.html"
             # check workcell provider
-            if workcell.provider == "huggingface":
-                workcell_server_url = get_hf_host(space_name=workcell.workcell_id) # jiandong-hello-workcell.hf.space
-            elif workcell.provider == "weanalyze":
-                # TODO: weanalyze cloud
-                # workcell_subdomain = workcell.core.utils.valid_workcell_subdomain(workcell.workcell_id)
-                # workcell_server_url = "{}.weanalyze.cloud".format(workcell_subdomain) # jiandong-hello-workcell.weanalyze.cloud
-                raise WorkcellProviderInvalidError(msg=workcell.provider)
+            if workcell.provider['name'] == "huggingface":
+                if workcell.provider['repository']:
+                    repo_id = workcell.provider['repository']
+                    workcell_server_url = get_hf_host(space_name=repo_id) # jiandong-hello-workcell.hf.space
+                else:
+                    # for localhost serving
+                    _, _, workcell_server_url = get_local_server_without_check(
+                        server_name=request.client.host, 
+                        server_port=7860 # TODO: checking
+                    )
             else:
-                # for localhost serving
-                _, _, workcell_server_url = get_local_server_without_check(
-                    server_name=request.client.host, 
-                    server_port=7860 # TODO: checking
-                )
+                raise WorkcellProviderInvalidError("Invalid provider: {}.".format(workcell.provider['name']))            
             # ui config
             config = {
                 "workcell_minifest_url": WORKCELL_UI_MANIFEST,

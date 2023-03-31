@@ -7,6 +7,7 @@ import yaml
 import inspect
 import importlib
 import dotenv
+import rich
 import requests
 from urllib.parse import urlparse
 import posixpath
@@ -184,116 +185,111 @@ def valid_workcell_import_string(
         return True
     else:
         return False 
-
-
-def valid_workcell_subdomain(
-    workcell_id: str
-) -> str:
-    """Prepare template folder for workcell.
-    This will create a folder and package template in build_path.
+    
+def gen_provider_config(
+    import_string: str,
+    provider_name: str="huggingface",
+) -> Dict:
+    """Prepare provider config for workcell.
+    This will create a provider config dict.
     Args:
-        workcell_id (str): universal cross-infra workcell_id.
-            e.g. workcell_id = "jiandong/hello_workcell"
-
+        import_string (str): import string / workcell name.
+            e.g. import_string = "app:hello_workcell"
+        provider_name (str): workcell provider.
+            e.g. provider_name = "huggingface"   
     Return:
-        workcell_subdomain (str): universal cross-infra workcell_subdomain.   
-            e.g. workcell_subdomain = jiandong-hello-workcell
+        provider (dict): provider config dict. 
     """
-    workcell_subdomain = "-".join(workcell_id.replace("_","-").split('/'))
-    return workcell_subdomain
-
+    entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
+    name = entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell"     
+    if provider_name == "huggingface":
+        if os.environ.get('HUGGINGFACE_USERNAME'):
+            repo_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), name)
+            provider = {
+                "name": "huggingface",
+                "repository": repo_id,
+                "branch": "main" # TODO: from user input
+            }
+        else:
+        # if there is no `HUGGINGFACE_USERNAME` set, we will set to None and move on, until user pack it.
+            provider = {
+                "name": "huggingface",
+                "repository": None,
+                "branch": None
+            }
+    else:
+        # TODO: futher confirm
+        provider = {
+            "name": "weanalyze"
+        }
+    return provider
 
 def gen_workcell_config(
     import_string: str,
-    image_uri:  str="",
-    workcell_provider: str="huggingface",
-    workcell_version: str="latest",
-    workcell_runtime: str="python3.8", 
-    workcell_tags: str="{}",
-    workcell_envs: str="{}"
+    provider_name: str="huggingface",
+    version: str="latest",
+    runtime: str="python3.8", 
+    tags: str="{}",
+    envs: str="{}"
 ) -> Dict:
     """Prepare template folder for workcell.
     This will create a folder and package template in build_path.
     Args:
-        import_string (str): import string / workcell fqdn.
+        import_string (str): import string / workcell name.
             e.g. import_string = "app:hello_workcell"
-        image_uri (str): docker image uri.
-            e.g. image_uri = "weanalyze/hello_workcell:latest"        
-        workcell_provider (str): workcell provider.
-            e.g. workcell_provider = "localhost", "huggingface"          
-        workcell_version (str): workcell version.
-            e.g. workcell_version = "latest"
-        workcell_runtime (str): workcell runtime.
-            e.g. workcell_runtime = "python3.8" 
-        workcell_tags (dict): workcell tags.
-            e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}'
-        workcell_envs (dict): workcell env.
-            e.g. workcell_envs = '{"STAGE":"latest"}'
+        provider_name (str): workcell provider.
+            e.g. provider_name = "huggingface"
+        version (str): workcell version.
+            e.g. version = "latest"
+        runtime (str): workcell runtime.
+            e.g. runtime = "python3.8" 
+        tags (dict): workcell tags.
+            e.g. tags = '{"vendor":"aws", "service-type":"http"}'
+        envs (dict): workcell env.
+            e.g. envs = '{"STAGE":"latest"}'
 
     Return:
         workcell_config (dict): build config for workcell.
     """
     # transparent workcell_config
     try:
-        workcell_entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
-        workcell_name = workcell_entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell" 
-        workcell_version = workcell_version # "latest" | "v1.0.0" | "dev" | "prod"
-        workcell_runtime = workcell_runtime # "python3.8" | "python3.9" | "nodejs14.x" | "nodejs12.x"
+        entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
+        name = entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell" 
+        version = version # "latest" | "v1.0.0" | "dev" | "prod"
+        runtime = runtime # "python3.8" | "python3.9" | "nodejs14.x" | "nodejs12.x"
     except Exception as e:
         raise WorkcellConfigGenerateError(e)
     
-    # workcell_id
-    if workcell_provider == "localhost":
-        workcell_id = "{}/{}".format("localhost", workcell_name)
-    elif workcell_provider == "huggingface":
-        if os.environ.get('HUGGINGFACE_USERNAME'):
-            workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
-        else:
-            raise WorkcellParamsFormatError(msg=workcell_provider)
-    elif workcell_provider == "weanalyze":
-        if os.environ.get('WEANALYZE_USERNAME'):
-            workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
-        else:
-            raise WorkcellParamsFormatError(msg=workcell_provider)
-    else:
-        raise WorkcellParamsFormatError(msg=workcell_provider)
-    
-    # workcell_code
+    # workcell provider, wrap into dict
     try:
-        # TODO: add Docker Hub username support
-        if image_uri == "" and os.getenv("DOCKERHUB_USERNAME"):
-            # default build tag: {dockerhub_username}/{workcell_name}:{workcell_version}
-            image_uri = "{}/{}:{}".format(os.getenv("DOCKERHUB_USERNAME"), workcell_name, workcell_version)
-        # ready to deploy
-        workcell_code = {
-            "ImageUri": image_uri
-        }
-    except:
-        raise WorkcellParamsFormatError(msg="workcell_id")
+        provider = gen_provider_config(
+            import_string,
+            provider_name
+        )
+    except Exception as e:
+        raise WorkcellParamsFormatError(msg=provider_name)
 
-    # workcell_tags
+    # workcell tags
     try:
-        workcell_tags = ast.literal_eval(workcell_tags) # useful tags
+        tags = ast.literal_eval(tags) # useful tags
     except:
-        raise WorkcellParamsFormatError(workcell_tags)
+        raise WorkcellParamsFormatError(tags)
 
-    # workcell_envs
+    # workcell envs
     try:
-        workcell_envs= ast.literal_eval(workcell_envs) # useful tags
+        envs= ast.literal_eval(envs) # useful tags
     except:
-        raise WorkcellParamsFormatError(workcell_envs)
+        raise WorkcellParamsFormatError(envs)
     
     # pack config
     workcell_config = {
-        "workcell_name": workcell_name, 
-        "workcell_provider": workcell_provider,   
-        "workcell_id": workcell_id,              
-        "workcell_version": workcell_version, 
-        "workcell_runtime": workcell_runtime, 
-        "workcell_entrypoint": workcell_entrypoint, 
-        "workcell_code": workcell_code,
-        "workcell_tags": workcell_tags, 
-        "workcell_envs": workcell_envs,
+        "name": name, 
+        "provider": provider,            
+        "version": version, 
+        "runtime": runtime, 
+        "entrypoint": entrypoint, 
+        "tags": tags, 
+        "envs": envs,
     } 
     return workcell_config
 

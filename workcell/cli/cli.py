@@ -78,15 +78,15 @@ def version(
 @cli.command()
 def new(
     project_name: str,
-    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"), # "localhost", "huggingface", "weanalyze"
-    workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r") # "python3.8", "python3.9"
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"), # "huggingface", "weanalyze"
+    runtime: str = typer.Option("python3.8", "--runtime", "-r") # "python3.8", "python3.9"
 ) -> None:
     """Init a new workcell template.
     This will create a template dir for workcell deployment.
     """
     # user project dir
     project_dir = os.path.join(os.getcwd(), project_name) # "./{project_dir}"
-    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, workcell_provider, workcell_runtime) # ".../workcell/templates/scaffold/huggingface/python3.8"
+    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, provider_name, runtime) # ".../workcell/templates/scaffold/huggingface/python3.8"
     try:
         init_workcell_project_dir(project_dir, scaffold_dir)
         typer.secho(f'Workcell project_dir created: {project_dir}', fg=typer.colors.GREEN, err=False)
@@ -120,8 +120,8 @@ def hello() -> None:
     try:
         new(
             project_name='hello_workcell',
-            workcell_provider='huggingface',
-            workcell_runtime='python3.8'
+            provider='huggingface',
+            runtime='python3.8'
         )
     except:
         return None 
@@ -140,39 +140,38 @@ def hello() -> None:
 @cli.command()
 def pack(
     import_string: str,
-    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),    
-    image_uri: str = typer.Option("", "--image", "-t"), # if build docker image
-    workcell_version: str = typer.Option("latest", "--version", "-v"),
-    workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
-    workcell_tags: str = typer.Option("{}", "--workcell_tags"),
-    workcell_envs: str = typer.Option("{}", "--workcell_envs"),
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"),    
+    version: str = typer.Option("latest", "--version", "-v"),
+    runtime: str = typer.Option("python3.8", "--runtime", "-r"),
+    tags: str = typer.Option("{}", "--tags"),
+    envs: str = typer.Option("{}", "--envs"),
 ) -> Tuple[str, str]:
     """Prepare deployment image for workcell.
     This will create a deployment folder and build docker image. \n
     Args: \n
         import_string (str): import_string, a.k.a workcell entrypoint. \n
             e.g. import_string = "app:hello_workcell" \n
-        workcell_provider (str): workcell provider. \n
-            e.g. workcell_provider = "huggingface" \n            
-        workcell_version (str): workcell version. \n
-            e.g. workcell_version = "latest" \n
-        workcell_runtime (str): workcell runtime. \n
-            e.g. workcell_runtime = "python3.8" \n
-        workcell_tags (dict): workcell tags. \n
-            e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}' \n
-        workcell_envs (dict): workcell env. \n
-            e.g. workcell_envs = '{"STAGE":"latest"}' \n
+        provider_name (str): workcell provider. \n
+            e.g. provider_name = "huggingface" \n            
+        version (str): workcell version. \n
+            e.g. version = "latest" \n
+        runtime (str): workcell runtime. \n
+            e.g. runtime = "python3.8" \n
+        tags (dict): workcell tags. \n
+            e.g. tags = '{"vendor":"aws", "service-type":"http"}' \n
+        envs (dict): workcell env. \n
+            e.g. envs = '{"STAGE":"latest"}' \n
     Return: \n
         build_dir (str): project build directory. \n
         workcell_config (dict): workcell configuration dict. \n
     """
     # check if provider valid
-    if workcell_provider not in SUPPORT_PROVIDER:
-        typer.secho(f"Given provider: {workcell_provider} is not valid. Please choose from {SUPPORT_PROVIDER}!", fg=typer.colors.RED, err=True)
+    if provider_name not in SUPPORT_PROVIDER:
+        typer.secho(f"Given provider: {provider_name} is not valid. Please choose from {SUPPORT_PROVIDER}!", fg=typer.colors.RED, err=True)
         return None
     # check if runtime valid
-    if workcell_runtime not in SUPPORT_RUNTIME:
-        typer.secho(f"Given runtime: {workcell_runtime} is not valid. Please choose from {SUPPORT_RUNTIME}!", fg=typer.colors.RED, err=True)
+    if runtime not in SUPPORT_RUNTIME:
+        typer.secho(f"Given runtime: {runtime} is not valid. Please choose from {SUPPORT_RUNTIME}!", fg=typer.colors.RED, err=True)
         return None    
     # function name
     function_name = import_string.split(":")[1]
@@ -183,17 +182,16 @@ def pack(
     # generate workcell_config
     workcell_config = gen_workcell_config(
         import_string = import_string,
-        workcell_provider = workcell_provider, # workcell_provider in [ "huggingface", ...] 
-        image_uri = image_uri,
-        workcell_version = workcell_version,
-        workcell_runtime = workcell_runtime, # workcell_runtime in [ "python3.8", ...] 
-        workcell_tags = workcell_tags,
-        workcell_envs = workcell_envs
+        provider_name = provider_name, # workcell provider name
+        version = version,
+        runtime = runtime, # workcell runtime in [ "python3.8", ...] 
+        tags = tags,
+        envs = envs
     ) 
     # user project dir
     function_dir = os.getcwd() # "./{project_dir}"
     build_dir = safe_join(function_dir, ".workcell") # "{project_dir}/.workcell/"
-    template_dir = safe_join(RUNTIME_FOLDER, f"{workcell_provider}/{workcell_runtime}") # ".../workcell/templates/runtime/huggingface/python3.8"
+    template_dir = safe_join(RUNTIME_FOLDER, f"{provider}/{runtime}") # ".../workcell/templates/runtime/huggingface/python3.8"
     workcell_config_file = safe_join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"
     # init project dir
     if os.path.exists(os.path.join(function_dir,'Dockerfile')):
@@ -242,51 +240,55 @@ def deploy(
     workcell_config = load_workcell_config(
         src = os.path.join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"  
     )
-    # parse workcell_config to deplot resources
-    # repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"), workcell_config['workcell_name'])
-    repo_id = workcell_config['workcell_id']
-    # huggingface hub api wrapper
-    hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
-    # check if exsists before create workspace
-    space_info = hf_wrapper.get_space(repo_id=repo_id)
-    if space_info is not None:
-        typer.secho("💥 Failed to create space!" + "\n"
-                    + "Provider: {}, repo: {} already exists!".format(workcell_config['workcell_provider'], repo_id), fg=typer.colors.RED, err=True)
-        return None
-    # create space
-    try:
-        repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
-        typer.secho("✨ Workcell deploy complete!" + "\n"
-                    + "Provider: {}".format(workcell_config['workcell_provider']) + "\n" 
-                    + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
-    except Exception as e:
-        typer.secho("Failed to create space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    # parse workcell provider to deploy resources, dict
+    provider = workcell_config['provider']
+    # now we support huggingface
+    if provider['name'] == "huggingface":
+        repo_id = provider['repository']
+        # huggingface hub api wrapper
+        hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
+        # check if exsists before create workspace
+        space_info = hf_wrapper.get_space(repo_id=repo_id)
+        if space_info is not None:
+            typer.secho("💥 Failed to create space!" + "\n"
+                        + "Provider: {}, repo: {} already exists!".format(workcell_config['provider'], repo_id), fg=typer.colors.RED, err=True)
+            return None
+        # create space
+        try:
+            repo_url = hf_wrapper.create_space(repo_id=repo_id, src_folder="./.workcell/")
+            typer.secho("✨ Workcell deploy complete!" + "\n"
+                        + "Provider: {}".format(workcell_config['provider']) + "\n" 
+                        + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+        except Exception as e:
+            typer.secho("Failed to create space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    else:
+        typer.secho("Unsupported provider: {} .".format(provider), fg=typer.colors.RED, err=True)
     return None
 
 @cli.command()
 def up(
     import_string: str,
-    workcell_provider: str = typer.Option("huggingface", "--provider", "-p"),
-    workcell_version: str = typer.Option("latest", "--version", "-v"),
-    workcell_runtime: str = typer.Option("python3.8", "--runtime", "-r"),
-    workcell_tags: str = typer.Option("{}", "--workcell_tags"),
-    workcell_envs: str = typer.Option("{}", "--workcell_envs"),
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"),
+    version: str = typer.Option("latest", "--version", "-v"),
+    runtime: str = typer.Option("python3.8", "--runtime", "-r"),
+    tags: str = typer.Option("{}", "--tags"),
+    envs: str = typer.Option("{}", "--envs"),
 ) -> None:
     """Build->push->deploy a workcell to weanalyze cloud.
     This will create a deployment folder and build docker image. \n
     Args: \n
         import_string (str): import_string, a.k.a workcell fqdn. \n
             e.g. import_string = "app:hello_workcell" \n
-        workcell_provider (str): workcell provider. \n
-            e.g. workcell_provider = "huggingface" \n            
-        workcell_version (str): workcell version. \n
-            e.g. workcell_version = "latest" \n
-        workcell_runtime (str): workcell runtime. \n
-            e.g. workcell_runtime = "python3.8" \n
-        workcell_tags (dict): workcell tags. \n
-            e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}' \n
-        workcell_envs(dict): workcell env. \n
-            e.g. workcell_envs = '{"STAGE":"latest"}' \n
+        provider (str): workcell provider. \n
+            e.g. provider_name = "huggingface" \n            
+        version (str): workcell version. \n
+            e.g. version = "latest" \n
+        runtime (str): workcell runtime. \n
+            e.g. runtime = "python3.8" \n
+        tags (dict): workcell tags. \n
+            e.g. tags = '{"vendor":"aws", "service-type":"http"}' \n
+        envs (dict): workcell env. \n
+            e.g. envs = '{"STAGE":"latest"}' \n
     Return: \n
         build_dir (str): project build directory. \n
         workcell_config (dict): workcell configuration dict. \n
@@ -294,11 +296,11 @@ def up(
     # Step1. Pack
     build_dir, _ = pack(
         import_string,
-        workcell_provider,
-        workcell_version,
-        workcell_runtime,
-        workcell_tags,
-        workcell_envs
+        provider_name,
+        version,
+        runtime,
+        tags,
+        envs
     ) 
     # Step2. Deploy
     deploy(build_dir)
@@ -326,25 +328,30 @@ def teardown(
     workcell_config = load_workcell_config(
         src = os.path.join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"  
     )
-    # parse workcell_config to deplot resources
-    # repo_id = "{}/{}".format(os.getenv("HUGGINGFACE_USERNAME"),workcell_config['workcell_name'])
-    repo_id = workcell_config['workcell_id']
-    # huggingface hub api wrapper
-    hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
-    # check if exsists before teardown workspace
-    space_info = hf_wrapper.get_space(repo_id=repo_id)
-    if space_info is None:
-        typer.secho("💥 Failed to teardown space!" + "\n"
-                    + "Provider: {}, repo: {} not exists!".format(workcell_config['workcell_provider'], repo_id), fg=typer.colors.RED, err=True)
-        return None
-    # teardown space
-    try:
-        repo_url = hf_wrapper.delete_space(repo_id=repo_id)
-        typer.secho("✨ Workcell teardown complete!" + "\n"
-                    + "Provider: {}".format(workcell_config['workcell_provider']) + "\n" 
-                    + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
-    except Exception as e:
-        typer.secho("Failed to teardown space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    # parse workcell provider to deploy resources
+    provider = workcell_config['provider']
+    # now we support huggingface
+    if provider['name'] == "huggingface":
+        # repo_id
+        repo_id = provider['repository']
+        # huggingface hub api wrapper
+        hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
+        # check if exsists before teardown workspace
+        space_info = hf_wrapper.get_space(repo_id=repo_id)
+        if space_info is None:
+            typer.secho("💥 Failed to teardown space!" + "\n"
+                        + "Provider: {}, repo: {} not exists!".format(workcell_config['provider']['name'], repo_id), fg=typer.colors.RED, err=True)
+            return None
+        # teardown space
+        try:
+            repo_url = hf_wrapper.delete_space(repo_id=repo_id)
+            typer.secho("✨ Workcell teardown complete!" + "\n"
+                        + "Provider: {}".format(workcell_config['provider']['name']) + "\n" 
+                        + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+        except Exception as e:
+            typer.secho("Failed to teardown space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
+    else:
+        typer.secho("Unsupported provider: {} .".format(provider), fg=typer.colors.RED, err=True)            
     return None
 
 @cli.command()
