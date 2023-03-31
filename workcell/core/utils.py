@@ -7,6 +7,7 @@ import yaml
 import inspect
 import importlib
 import dotenv
+import rich
 import requests
 from urllib.parse import urlparse
 import posixpath
@@ -184,10 +185,48 @@ def valid_workcell_import_string(
         return True
     else:
         return False 
+    
+def gen_provider_config(
+    import_string: str,
+    provider_name: str="huggingface",
+) -> Dict:
+    """Prepare provider config for workcell.
+    This will create a provider config dict.
+    Args:
+        import_string (str): import string / workcell name.
+            e.g. import_string = "app:hello_workcell"
+        provider_name (str): workcell provider.
+            e.g. provider_name = "huggingface"   
+    Return:
+        provider (dict): provider config dict. 
+    """
+    entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
+    name = entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell"     
+    if provider_name == "huggingface":
+        if os.environ.get('HUGGINGFACE_USERNAME'):
+            repo_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), name)
+            provider = {
+                "name": "huggingface",
+                "repository": repo_id,
+                "branch": "main" # TODO: from user input
+            }
+        else:
+        # if there is no `HUGGINGFACE_USERNAME` set, we will set to None and move on, until user pack it.
+            provider = {
+                "name": "huggingface",
+                "repository": None,
+                "branch": None
+            }
+    else:
+        # TODO: futher confirm
+        provider = {
+            "name": "weanalyze"
+        }
+    return provider
 
 def gen_workcell_config(
     import_string: str,
-    provider: str="huggingface",
+    provider_name: str="huggingface",
     version: str="latest",
     runtime: str="python3.8", 
     tags: str="{}",
@@ -196,9 +235,9 @@ def gen_workcell_config(
     """Prepare template folder for workcell.
     This will create a folder and package template in build_path.
     Args:
-        import_string (str): import string / workcell fqdn.
+        import_string (str): import string / workcell name.
             e.g. import_string = "app:hello_workcell"
-        provider (str): workcell provider.
+        provider_name (str): workcell provider.
             e.g. provider_name = "huggingface"
         version (str): workcell version.
             e.g. version = "latest"
@@ -222,18 +261,13 @@ def gen_workcell_config(
         raise WorkcellConfigGenerateError(e)
     
     # workcell provider, wrap into dict
-    if provider == "huggingface":
-        if os.environ.get('HUGGINGFACE_USERNAME'):
-            repo_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), name)
-            provider = {
-                "name": "huggingface",
-                "repository": repo_id,
-                "branch": "main" # TODO: from user input
-            }
-        else:
-            raise WorkcellParamsFormatError(msg=provider)
-    else:
-        raise WorkcellParamsFormatError(msg=provider)
+    try:
+        provider = gen_provider_config(
+            import_string,
+            provider_name
+        )
+    except Exception as e:
+        raise WorkcellParamsFormatError(msg=provider_name)
 
     # workcell tags
     try:

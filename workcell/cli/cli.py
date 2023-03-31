@@ -78,7 +78,7 @@ def version(
 @cli.command()
 def new(
     project_name: str,
-    provider: str = typer.Option("huggingface", "--provider", "-p"), # "huggingface", "weanalyze"
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"), # "huggingface", "weanalyze"
     runtime: str = typer.Option("python3.8", "--runtime", "-r") # "python3.8", "python3.9"
 ) -> None:
     """Init a new workcell template.
@@ -86,7 +86,7 @@ def new(
     """
     # user project dir
     project_dir = os.path.join(os.getcwd(), project_name) # "./{project_dir}"
-    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, provider, runtime) # ".../workcell/templates/scaffold/huggingface/python3.8"
+    scaffold_dir = os.path.join(SCAFFOLD_FOLDER, provider_name, runtime) # ".../workcell/templates/scaffold/huggingface/python3.8"
     try:
         init_workcell_project_dir(project_dir, scaffold_dir)
         typer.secho(f'Workcell project_dir created: {project_dir}', fg=typer.colors.GREEN, err=False)
@@ -140,7 +140,7 @@ def hello() -> None:
 @cli.command()
 def pack(
     import_string: str,
-    provider: str = typer.Option("huggingface", "--provider", "-p"),    
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"),    
     version: str = typer.Option("latest", "--version", "-v"),
     runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     tags: str = typer.Option("{}", "--tags"),
@@ -151,8 +151,8 @@ def pack(
     Args: \n
         import_string (str): import_string, a.k.a workcell entrypoint. \n
             e.g. import_string = "app:hello_workcell" \n
-        provider (str): workcell provider. \n
-            e.g. provider = "huggingface" \n            
+        provider_name (str): workcell provider. \n
+            e.g. provider_name = "huggingface" \n            
         version (str): workcell version. \n
             e.g. version = "latest" \n
         runtime (str): workcell runtime. \n
@@ -166,8 +166,8 @@ def pack(
         workcell_config (dict): workcell configuration dict. \n
     """
     # check if provider valid
-    if provider not in SUPPORT_PROVIDER:
-        typer.secho(f"Given provider: {provider} is not valid. Please choose from {SUPPORT_PROVIDER}!", fg=typer.colors.RED, err=True)
+    if provider_name not in SUPPORT_PROVIDER:
+        typer.secho(f"Given provider: {provider_name} is not valid. Please choose from {SUPPORT_PROVIDER}!", fg=typer.colors.RED, err=True)
         return None
     # check if runtime valid
     if runtime not in SUPPORT_RUNTIME:
@@ -182,7 +182,7 @@ def pack(
     # generate workcell_config
     workcell_config = gen_workcell_config(
         import_string = import_string,
-        provider = provider, # workcell provider name
+        provider_name = provider_name, # workcell provider name
         version = version,
         runtime = runtime, # workcell runtime in [ "python3.8", ...] 
         tags = tags,
@@ -268,7 +268,7 @@ def deploy(
 @cli.command()
 def up(
     import_string: str,
-    provider: str = typer.Option("huggingface", "--provider", "-p"),
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"),
     version: str = typer.Option("latest", "--version", "-v"),
     runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     tags: str = typer.Option("{}", "--tags"),
@@ -280,7 +280,7 @@ def up(
         import_string (str): import_string, a.k.a workcell fqdn. \n
             e.g. import_string = "app:hello_workcell" \n
         provider (str): workcell provider. \n
-            e.g. provider = "huggingface" \n            
+            e.g. provider_name = "huggingface" \n            
         version (str): workcell version. \n
             e.g. version = "latest" \n
         runtime (str): workcell runtime. \n
@@ -296,7 +296,7 @@ def up(
     # Step1. Pack
     build_dir, _ = pack(
         import_string,
-        provider,
+        provider_name,
         version,
         runtime,
         tags,

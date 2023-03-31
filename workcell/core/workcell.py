@@ -7,9 +7,13 @@ from pydantic import BaseModel, parse_raw_as
 from pydantic.tools import parse_obj_as
 
 from workcell.core.components import Component
-from workcell.core.utils import format_workcell_entrypoint, name_to_title
-from workcell.core.utils import gen_workcell_config
 from workcell.core.spec import generate_json_schema
+from workcell.core.utils import (
+    format_workcell_entrypoint, 
+    name_to_title, 
+    gen_workcell_config, 
+    gen_provider_config
+)
 from workcell.core.errors import (
     CallableTypeError,
     WorkcellConfigFormatError
@@ -105,11 +109,11 @@ class Workcell:
     def __init__(
         self, 
         fn: Callable | str | Dict, # callable function, import string, workcell_config
-        provider: Optional[str] = "huggingface",
-        version: Optional[str] = "latest",
-        runtime: Optional[str] = "python3.8",
-        tags: Optional[Dict] = {},
-        envs: Optional[Dict] = {},        
+        provider_name: Optional[str] = "huggingface", 
+        version: Optional[str] = "latest", 
+        runtime: Optional[str] = "python3.8", 
+        tags: Optional[Dict] = {}, 
+        envs: Optional[Dict] = {}, 
         auth: Optional[Dict] = None,
         **kwargs,
     ):
@@ -145,7 +149,7 @@ class Workcell:
             # as-is config
             self.config = fn
         else:     
-            # get callable
+            # get callable or import string
             if isinstance(fn, str):
                 # Try to load the function from a string notion
                 self.function = get_callable(fn)
@@ -160,7 +164,10 @@ class Workcell:
                 raise CallableTypeError("The provided callable is an uninitialized Class. This is not allowed.")                                    
             # workcell config
             self.name = None
-            self.provider = provider
+            self.provider = gen_provider_config(
+                import_string=self.import_string, 
+                provider_name=provider_name
+            )
             self.version = version
             self.runtime = runtime
             self.entrypoint = self.import_string
@@ -209,14 +216,15 @@ class Workcell:
         self.spec = get_spec(self.function)
 
         # Get config
-        if self.config is None:
+        if self.config is None: 
+            # only happens when user set import string or callable
             self.config = gen_workcell_config(
-                import_string = self.import_string,
-                version = self.version,
-                provider = self.provider,
+                import_string = self.import_string, 
+                provider_name = self.provider.get("name"), 
+                version = self.version, 
                 runtime = self.runtime, 
-                tags = str(self.tags),
-                envs = str(self.envs),
+                tags = str(self.tags), 
+                envs = str(self.envs), 
             )
 
     def __call__(self, input: Any, **kwargs: Any) -> Any:
