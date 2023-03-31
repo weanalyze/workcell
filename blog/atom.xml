@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<feed xmlns="http://www.w3.org/2005/Atom">
+    <id>https://weanalyze.github.io/workcell/blog</id>
+    <title>Workcell Blog</title>
+    <updated>2023-03-07T00:00:00.000Z</updated>
+    <generator>https://github.com/jpmonette/feed</generator>
+    <link rel="alternate" href="https://weanalyze.github.io/workcell/blog"/>
+    <subtitle>Workcell Blog</subtitle>
+    <icon>https://weanalyze.github.io/workcell/img/favicon.ico</icon>
+    <entry>
+        <title type="html"><![CDATA[Welcome]]></title>
+        <id>https://weanalyze.github.io/workcell/blog/welcome</id>
+        <link href="https://weanalyze.github.io/workcell/blog/welcome"/>
+        <updated>2023-03-07T00:00:00.000Z</updated>
+        <summary type="html"><![CDATA[Hi, we are developer of workcell, so far so good.]]></summary>
+        <content type="html"><![CDATA[<p>Hi, we are developer of <a href="https://github.com/weanalyze/workcell" target="_blank" rel="noopener noreferrer">workcell</a>, so far so good.</p><p>We present <a href="https://github.com/weanalyze/workcell" target="_blank" rel="noopener noreferrer">workcell</a> to you:</p><p><img loading="lazy" alt="Workcell" src="/workcell/assets/images/workcell-banner-ab6ab20043f067ccb08d9ed07319e830.png" width="2152" height="1080" class="img_ev3q"></p><p>Instantly turn your Python function into production-ready microservice.</p>]]></content>
+        <author>
+            <name>jiandong</name>
+            <uri>https://github.com/jiandongj</uri>
+        </author>
+        <author>
+            <name>shinnqy</name>
+            <uri>https://github.com/shinnqy</uri>
+        </author>
+        <author>
+            <name>ne</name>
+            <uri>https://github.com/neshang</uri>
+        </author>
+        <category label="hello" term="hello"/>
+        <category label="weanalyze" term="weanalyze"/>
+        <category label="workcell" term="workcell"/>
+    </entry>
+</feed>

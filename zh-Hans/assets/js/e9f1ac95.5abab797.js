@@ -1,0 +1,1 @@
+"use strict";(self.webpackChunkworkcell_doc=self.webpackChunkworkcell_doc||[]).push([[5937],{8926:l=>{l.exports=JSON.parse('{"label":"hello","permalink":"/workcell/zh-Hans/blog/tags/hello","allTagsPath":"/workcell/zh-Hans/blog/tags","count":1}')}}]);
