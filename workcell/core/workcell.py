@@ -9,15 +9,12 @@ from pydantic.tools import parse_obj_as
 from workcell.core.components import Component
 from workcell.core.spec import generate_json_schema
 from workcell.core.utils import (
-    format_workcell_entrypoint, 
-    name_to_title, 
-    gen_workcell_config, 
-    gen_provider_config
+    format_workcell_entrypoint,
+    name_to_title,
+    gen_workcell_config,
+    gen_provider_config,
 )
-from workcell.core.errors import (
-    CallableTypeError,
-    WorkcellConfigFormatError
-)
+from workcell.core.errors import CallableTypeError, WorkcellConfigFormatError
 
 
 def is_compatible_type(type: Type) -> bool:
@@ -96,24 +93,31 @@ def get_callable(import_string: str) -> Callable:
     """Import a callable from an string."""
     # e.g. import_string = "examples.hello_world.app:hello_workcell"
     workcell_path = format_workcell_entrypoint(import_string)
-    loader_path, function_name = workcell_path.split(":")[0], workcell_path.split(":")[-1]
+    loader_path, function_name = (
+        workcell_path.split(":")[0],
+        workcell_path.split(":")[-1],
+    )
     try:
         mod = importlib.import_module(loader_path)
         fn = getattr(mod, function_name)
     except:
-        raise ValueError("The callable path import failed! Given import string: {}".format(import_string))
+        raise ValueError(
+            "The callable path import failed! Given import string: {}".format(
+                import_string
+            )
+        )
     return fn
 
 
 class Workcell:
     def __init__(
-        self, 
-        fn: Callable | str | Dict, # callable function, import string, workcell_config
-        provider_name: Optional[str] = "huggingface", 
-        version: Optional[str] = "latest", 
-        runtime: Optional[str] = "python3.8", 
-        tags: Optional[Dict] = {}, 
-        envs: Optional[Dict] = {}, 
+        self,
+        fn: Callable | str | Dict,  # callable function, import string, workcell_config
+        provider_name: Optional[str] = "huggingface",
+        version: Optional[str] = "latest",
+        runtime: Optional[str] = "python3.8",
+        tags: Optional[Dict] = {},
+        envs: Optional[Dict] = {},
         auth: Optional[Dict] = None,
         **kwargs,
     ):
@@ -130,14 +134,14 @@ class Workcell:
             A workcell instance.
         """
         # authentication
-        self._auth = auth           
+        self._auth = auth
         # extract from workcell config
         if isinstance(fn, Dict):
             if fn is None:
                 raise WorkcellConfigFormatError(msg=fn)
             # workcell config
             self.name = fn.get("name")
-            self.provider = fn.get("provider") # a dict
+            self.provider = fn.get("provider")  # a dict
             self.version = fn.get("version")
             self.runtime = fn.get("runtime")
             self.entrypoint = fn.get("entrypoint")
@@ -148,7 +152,7 @@ class Workcell:
             self.import_string = self.entrypoint
             # as-is config
             self.config = fn
-        else:     
+        else:
             # get callable or import string
             if isinstance(fn, str):
                 # Try to load the function from a string notion
@@ -161,12 +165,13 @@ class Workcell:
             if not callable(self.function):
                 raise CallableTypeError(str(self.function))
             if inspect.isclass(self.function):
-                raise CallableTypeError("The provided callable is an uninitialized Class. This is not allowed.")                                    
+                raise CallableTypeError(
+                    "The provided callable is an uninitialized Class. This is not allowed."
+                )
             # workcell config
             self.name = None
             self.provider = gen_provider_config(
-                import_string=self.import_string, 
-                provider_name=provider_name
+                import_string=self.import_string, provider_name=provider_name
             )
             self.version = version
             self.runtime = runtime
@@ -174,7 +179,7 @@ class Workcell:
             self.tags = tags
             self.envs = envs
             # as-is config
-            self.config = None 
+            self.config = None
 
         # Properties: name, description, input_type, output_type,
         if inspect.isfunction(self.function):
@@ -187,7 +192,7 @@ class Workcell:
             doc_string = inspect.getdoc(self.function)
             if doc_string:
                 self.description = doc_string
-            
+
         elif hasattr(self.function, "__call__"):
             # The provided callable is a function
             self.input_type = get_input_type(self.function.__call__)  # type: ignore
@@ -216,15 +221,15 @@ class Workcell:
         self.spec = get_spec(self.function)
 
         # Get config
-        if self.config is None: 
+        if self.config is None:
             # only happens when user set import string or callable
             self.config = gen_workcell_config(
-                import_string = self.import_string, 
-                provider_name = self.provider.get("name"), 
-                version = self.version, 
-                runtime = self.runtime, 
-                tags = str(self.tags), 
-                envs = str(self.envs), 
+                import_string=self.import_string,
+                provider_name=self.provider.get("name"),
+                version=self.version,
+                runtime=self.runtime,
+                tags=str(self.tags),
+                envs=str(self.envs),
             )
 
     def __call__(self, input: Any, **kwargs: Any) -> Any:

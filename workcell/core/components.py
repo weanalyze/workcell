@@ -29,7 +29,7 @@ class Component(BaseModel):
             self.__class__.__base__.__name__.lower()
             if hasattr(self, "is_template")
             else self.__class__.__name__.lower()
-        ) 
+        )
 
     def preprocess(self, x: Any) -> Any:
         """
@@ -46,5 +46,5 @@ class Component(BaseModel):
     def style(self, **kwargs):
         """
         This method can be used to change the appearance of the component.
-        """        
+        """
         pass
