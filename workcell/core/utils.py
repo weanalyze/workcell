@@ -211,14 +211,14 @@ def gen_provider_config(
                 "branch": "main" # TODO: from user input
             }
         else:
-        # if there is no `HUGGINGFACE_USERNAME` set, we will set to None and move on, until user pack it.
+            # if there is no `HUGGINGFACE_USERNAME` set, we will set to None and move on, until user pack it.
             provider = {
                 "name": "huggingface",
-                "repository": None,
-                "branch": None
+                "repository": "",
+                "branch": ""
             }
     else:
-        # TODO: futher confirm
+        # TODO: 
         provider = {
             "name": "weanalyze"
         }

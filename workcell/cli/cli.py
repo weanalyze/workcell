@@ -140,7 +140,7 @@ def hello() -> None:
 @cli.command()
 def pack(
     import_string: str,
-    provider_name: str = typer.Option("huggingface", "--provider", "-p"),    
+    provider_name: str = typer.Option("huggingface", "--provider", "-p"), 
     version: str = typer.Option("latest", "--version", "-v"),
     runtime: str = typer.Option("python3.8", "--runtime", "-r"),
     tags: str = typer.Option("{}", "--tags"),
@@ -169,16 +169,23 @@ def pack(
     if provider_name not in SUPPORT_PROVIDER:
         typer.secho(f"Given provider: {provider_name} is not valid. Please choose from {SUPPORT_PROVIDER}!", fg=typer.colors.RED, err=True)
         return None
+    else:
+        # check if needed variable is properly set
+        if provider_name == "huggingface":
+            if not os.environ.get('HUGGINGFACE_USERNAME'):
+                typer.secho(f"Provider: {provider_name}, `HUGGINGFACE_NAME` is not set.", fg=typer.colors.RED, err=True)
+            if not os.environ.get('HUGGINGFACE_TOKEN'):
+                typer.secho(f"Provider: {provider_name}, `HUGGINGFACE_TOKEN` is not set.", fg=typer.colors.RED, err=True)
     # check if runtime valid
     if runtime not in SUPPORT_RUNTIME:
         typer.secho(f"Given runtime: {runtime} is not valid. Please choose from {SUPPORT_RUNTIME}!", fg=typer.colors.RED, err=True)
-        return None    
-    # function name
-    function_name = import_string.split(":")[1]
+        return None 
     # check if function_name exists in app.py
+    function_name = import_string.split(":")[1]
     if not valid_workcell_import_string(import_string):
         typer.secho(f"Import function: {function_name} from app.py failed, check spelling or dependencies.", fg=typer.colors.RED, err=True)
         return None
+    
     # generate workcell_config
     workcell_config = gen_workcell_config(
         import_string = import_string,
@@ -191,7 +198,7 @@ def pack(
     # user project dir
     function_dir = os.getcwd() # "./{project_dir}"
     build_dir = safe_join(function_dir, ".workcell") # "{project_dir}/.workcell/"
-    template_dir = safe_join(RUNTIME_FOLDER, f"{provider}/{runtime}") # ".../workcell/templates/runtime/huggingface/python3.8"
+    template_dir = safe_join(RUNTIME_FOLDER, f"{provider_name}/{runtime}") # ".../workcell/templates/runtime/huggingface/python3.8"
     workcell_config_file = safe_join(build_dir, "workcell.yaml") # "{project_dir}/.workcell/workcell.yaml"
     # init project dir
     if os.path.exists(os.path.join(function_dir,'Dockerfile')):
@@ -230,10 +237,10 @@ def deploy(
         repo_url (str): huggingface repo url.
     """
     # check if environment variable `HUGGINGFACE_USERNAME` and `HUGGINGFACE_TOKEN`
-    if not os.getenv("HUGGINGFACE_USERNAME") or (os.getenv("HUGGINGFACE_USERNAME") is None):
-        typer.secho("Please set environment variable `HUGGINGFACE_USERNAME`.", fg=typer.colors.RED, err=True)
+    if not os.getenv("HUGGINGFACE_USERNAME"):
+        typer.secho("Please set environment variable `HUGGINGFACE_USERNAME`, and re-run `workcell pack`.", fg=typer.colors.RED, err=True)
         return None     
-    if not os.getenv("HUGGINGFACE_TOKEN") or (os.getenv("HUGGINGFACE_TOKEN") is None):
+    if not os.getenv("HUGGINGFACE_TOKEN"):
         typer.secho("Please set environment variable `HUGGINGFACE_TOKEN`.", fg=typer.colors.RED, err=True)
         return None 
     # load workcell_config
@@ -247,8 +254,10 @@ def deploy(
         repo_id = provider['repository']
         # huggingface hub api wrapper
         hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
+        print(repo_id)
         # check if exsists before create workspace
         space_info = hf_wrapper.get_space(repo_id=repo_id)
+        print("get space")
         if space_info is not None:
             typer.secho("💥 Failed to create space!" + "\n"
                         + "Provider: {}, repo: {} already exists!".format(workcell_config['provider'], repo_id), fg=typer.colors.RED, err=True)
@@ -317,11 +326,8 @@ def teardown(
     Return: \n
         None.
     """
-    # check if environment variable `HUGGINGFACE_USERNAME` and `HUGGINGFACE_TOKEN`
-    if not os.getenv("HUGGINGFACE_USERNAME") or (os.getenv("HUGGINGFACE_USERNAME") is None):
-        typer.secho("Please set environment variable `HUGGINGFACE_USERNAME`.", fg=typer.colors.RED, err=True)
-        return None     
-    if not os.getenv("HUGGINGFACE_TOKEN") or (os.getenv("HUGGINGFACE_TOKEN") is None):
+    # check if environment variable `HUGGINGFACE_TOKEN` is set
+    if not os.getenv("HUGGINGFACE_TOKEN"):
         typer.secho("Please set environment variable `HUGGINGFACE_TOKEN`.", fg=typer.colors.RED, err=True)
         return None 
     # load workcell_config
@@ -344,10 +350,10 @@ def teardown(
             return None
         # teardown space
         try:
-            repo_url = hf_wrapper.delete_space(repo_id=repo_id)
+            hf_wrapper.delete_space(repo_id=repo_id)
             typer.secho("✨ Workcell teardown complete!" + "\n"
                         + "Provider: {}".format(workcell_config['provider']['name']) + "\n" 
-                        + "Endpoint: {}".format(repo_url), fg=typer.colors.GREEN)
+                        + "Original Endpoint: {}".format(repo_id), fg=typer.colors.GREEN)
         except Exception as e:
             typer.secho("Failed to teardown space! Exception type: {}, message: {}.".format(type(e), e), fg=typer.colors.RED, err=True)
     else:
