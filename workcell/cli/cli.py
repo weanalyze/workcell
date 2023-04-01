@@ -193,12 +193,14 @@ def pack(
                     fg=typer.colors.RED,
                     err=True,
                 )
+                return None
             if not os.environ.get("HUGGINGFACE_TOKEN"):
                 typer.secho(
                     f"Provider: {provider_name}, `HUGGINGFACE_TOKEN` is not set.",
                     fg=typer.colors.RED,
                     err=True,
                 )
+                return None
     # check if runtime valid
     if runtime not in SUPPORT_RUNTIME:
         typer.secho(
@@ -301,10 +303,8 @@ def deploy(
         repo_id = provider["repository"]
         # huggingface hub api wrapper
         hf_wrapper = HuggingfaceWrapper(token=os.getenv("HUGGINGFACE_TOKEN"))
-        print(repo_id)
         # check if exsists before create workspace
         space_info = hf_wrapper.get_space(repo_id=repo_id)
-        print("get space")
         if space_info is not None:
             typer.secho(
                 "💥 Failed to create space!"
