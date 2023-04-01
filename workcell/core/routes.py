@@ -122,7 +122,7 @@ def create_workcell_app(workcell: Workcell) -> App:
             template = "frontend/index.html"
             # check workcell provider
             if workcell.provider['name'] == "huggingface":
-                if workcell.provider['repository']:
+                if workcell.provider['repository'] != "":
                     repo_id = workcell.provider['repository']
                     workcell_server_url = get_hf_host(space_name=repo_id) # jiandong-hello-workcell.hf.space
                 else:
