@@ -137,7 +137,6 @@ def save_pil_to_file(pil_image, dir=None):
 
 def encode_pil_to_base64(pil_image):
     with BytesIO() as output_bytes:
-
         # Copy any text-only metadata
         use_metadata = False
         metadata = PngImagePlugin.PngInfo()

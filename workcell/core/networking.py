@@ -146,12 +146,12 @@ def start_server(
         path_to_local_server = "https://{}:{}/".format(url_host_name, port)
     else:
         path_to_local_server = "http://{}:{}/".format(url_host_name, port)
-    
+
     app = create_workcell_app(workcell)
 
     if workcell.save_to is not None:  # Used for selenium tests
         workcell.save_to["port"] = port
-        
+
     config = uvicorn.Config(
         app=app,
         port=port,

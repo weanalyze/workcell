@@ -26,10 +26,11 @@ def serialize_list_with_pyarrow(names, data, types=None, legacy=False):
             kwargs["type"] = types[idx]
         arrays.append(pa.array(column, **kwargs))
 
-    batch = pa.RecordBatch.from_arrays(arrays, names) # batch = pa.RecordBatch.from_pandas(dataframe)
+    batch = pa.RecordBatch.from_arrays(
+        arrays, names
+    )  # batch = pa.RecordBatch.from_pandas(dataframe)
     table = pa.Table.from_batches([batch])
-    writer = pa.RecordBatchStreamWriter(
-        stream, table.schema, use_legacy_format=legacy)
+    writer = pa.RecordBatchStreamWriter(stream, table.schema, use_legacy_format=legacy)
 
     writer.write_table(table)
     return stream.getvalue().to_pybytes()
@@ -47,10 +48,10 @@ def serialize_dataframe_with_pyarrow(dataframe: pd.DataFrame, types=None, legacy
     Returns:
         bytes : a bytes object containing the arrow-serialized output.
     """
-    batch = pa.RecordBatch.from_pandas(dataframe) # batch = pa.record_batch(dataframe)
+    batch = pa.RecordBatch.from_pandas(dataframe)  # batch = pa.record_batch(dataframe)
     write_options = pa.ipc.IpcWriteOptions(compression="zstd")
     sink = pa.BufferOutputStream()
-    with pa.ipc.new_stream(sink, batch.schema,   options=write_options) as writer:
+    with pa.ipc.new_stream(sink, batch.schema, options=write_options) as writer:
         writer.write_batch(batch)
     pybytes = sink.getvalue().to_pybytes()
     pybytes_str = jsonpickle.encode(pybytes, unpicklable=True, make_refs=False)

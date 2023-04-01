@@ -17,8 +17,8 @@ def create_app(
 
 
 def launch_app(
-    fn: Callable | str | Dict, 
-    host: str,    
+    fn: Callable | str | Dict,
+    host: str,
     port: int,
 ) -> None:
     workcell = Workcell(fn)
@@ -26,13 +26,11 @@ def launch_app(
     uvicorn.run(app, host=host, port=port, log_level="info")
 
 
-def launch_app_socket(
-    workcell_path: str, 
-    port: int, 
-    host: str
-) -> None:
+def launch_app_socket(workcell_path: str, port: int, host: str) -> None:
     workcell = Workcell(workcell_path)
-    server_name, server_port, local_url, app, server = start_server(workcell, server_name=host, server_port=port)
+    server_name, server_port, local_url, app, server = start_server(
+        workcell, server_name=host, server_port=port
+    )
     try:
         while True:
             time.sleep(0.1)
