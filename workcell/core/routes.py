@@ -20,12 +20,9 @@ from workcell.core.utils import get_local_server_without_check
 from workcell.core.constants import (
     TEMPLATE_FOLDER,
     WORKCELL_UI_TEMPLATE,
-    WORKCELL_UI_MANIFEST
+    WORKCELL_UI_MANIFEST,
 )
-from workcell.core.errors import (
-    TemplateNotFoundError,
-    WorkcellProviderInvalidError
-)
+from workcell.core.errors import TemplateNotFoundError, WorkcellProviderInvalidError
 from workcell.deploy.huggingface.utils import get_hf_host
 
 
@@ -85,10 +82,10 @@ class App(fastapi.FastAPI):
 
 def create_workcell_app(workcell: Workcell) -> App:
     app = App(
-        title=workcell.title, 
-        version=workcell.version, 
-        description=workcell.description,             
-        default_response_class=ORJSONResponse
+        title=workcell.title,
+        version=workcell.version,
+        description=workcell.description,
+        default_response_class=ORJSONResponse,
     )
     app.configure_app(workcell)
     app.add_middleware(
@@ -103,15 +100,14 @@ def create_workcell_app(workcell: Workcell) -> App:
     ###############
 
     # Redirect to docs
-    @app.get("/", include_in_schema=False
-    )
+    @app.get("/", include_in_schema=False)
     async def root() -> Any:
         return RedirectResponse("./ui")
-    
+
     # Docs
     @app.get("/docs", include_in_schema=False)
     async def docs() -> Any:
-        return RedirectResponse("./docs")    
+        return RedirectResponse("./docs")
 
     # UI
     @app.get("/ui", response_class=HTMLResponse)
@@ -121,23 +117,26 @@ def create_workcell_app(workcell: Workcell) -> App:
             # template = WORKCELL_UI_TEMPLATE
             template = "frontend/index.html"
             # check workcell provider
-            if workcell.provider == "huggingface":
-                workcell_server_url = get_hf_host(space_name=workcell.workcell_id) # jiandong-hello-workcell.hf.space
-            elif workcell.provider == "weanalyze":
-                # TODO: weanalyze cloud
-                # workcell_subdomain = workcell.core.utils.valid_workcell_subdomain(workcell.workcell_id)
-                # workcell_server_url = "{}.weanalyze.cloud".format(workcell_subdomain) # jiandong-hello-workcell.weanalyze.cloud
-                raise WorkcellProviderInvalidError(msg=workcell.provider)
+            if workcell.provider["name"] == "huggingface":
+                if workcell.provider["repository"] != "":
+                    repo_id = workcell.provider["repository"]
+                    workcell_server_url = get_hf_host(
+                        space_name=repo_id
+                    )  # jiandong-hello-workcell.hf.space
+                else:
+                    # for localhost serving
+                    _, _, workcell_server_url = get_local_server_without_check(
+                        server_name=request.client.host,
+                        server_port=7860,  # TODO: checking
+                    )
             else:
-                # for localhost serving
-                _, _, workcell_server_url = get_local_server_without_check(
-                    server_name=request.client.host, 
-                    server_port=7860 # TODO: checking
+                raise WorkcellProviderInvalidError(
+                    "Invalid provider: {}.".format(workcell.provider["name"])
                 )
             # ui config
             config = {
                 "workcell_minifest_url": WORKCELL_UI_MANIFEST,
-                "workcell_server_url": workcell_server_url
+                "workcell_server_url": workcell_server_url,
             }
             return templates.TemplateResponse(
                 template, {"request": request, "config": config}
@@ -148,7 +147,7 @@ def create_workcell_app(workcell: Workcell) -> App:
                 "works when Workcell is installed through the pip package."
             )
 
-    # API 
+    # API
     @app.post(
         "/call",
         operation_id="call",
@@ -170,7 +169,7 @@ def create_workcell_app(workcell: Workcell) -> App:
     )
     async def info() -> Any:  # type: ignore
         """Returns informational metadata about this Workcell."""
-        return {"info":workcell.description}
+        return {"info": workcell.description}
 
     @app.get(
         "/spec",
@@ -182,7 +181,8 @@ def create_workcell_app(workcell: Workcell) -> App:
     )
     async def spec() -> Any:  # type: ignore
         """Returns informational metadata about this Workcell."""
-        return {"spec":workcell.spec, "info":workcell.description}
+        return {"spec": workcell.spec, "info": workcell.description}
+
     return app
 
 

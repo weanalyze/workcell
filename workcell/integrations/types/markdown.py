@@ -4,7 +4,9 @@ from pydantic import BaseModel, Field
 
 class MarkdownMixin(BaseModel):
     data: str = Field(
-        ..., title="Markdown Mixin", description="A markdown which data is encoded in json format."
+        ...,
+        title="Markdown Mixin",
+        description="A markdown which data is encoded in json format.",
     )
 
     class Config:

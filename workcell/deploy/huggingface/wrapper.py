@@ -13,12 +13,35 @@ from workcell.core.errors import (
     HuggingfaceDeleteRepoError,
 )
 
-IGNORE_PATTERNS = ['__pycache__', '.*', '*.pyc', '*.pyo', '*.pyd', '*.so', '*.dylib', '*.egg-info', '*.egg', '*.dist-info', '*.egg-info', '*.egg', '*.dist-info', '*.git', '*.hg', '*.svn', '*.DS_Store', '*.gitignore', '*.gitattributes', '*.gitmodules', '*.gitkeep']
+IGNORE_PATTERNS = [
+    "__pycache__",
+    ".*",
+    "*.pyc",
+    "*.pyo",
+    "*.pyd",
+    "*.so",
+    "*.dylib",
+    "*.egg-info",
+    "*.egg",
+    "*.dist-info",
+    "*.egg-info",
+    "*.egg",
+    "*.dist-info",
+    "*.git",
+    "*.hg",
+    "*.svn",
+    "*.DS_Store",
+    "*.gitignore",
+    "*.gitattributes",
+    "*.gitmodules",
+    "*.gitkeep",
+]
 
 
 class HuggingfaceWrapper:
-
-    def __init__(self, endpoint: Optional[str]=None, token: Optional[str]=None) -> None:
+    def __init__(
+        self, endpoint: Optional[str] = None, token: Optional[str] = None
+    ) -> None:
         if endpoint:
             self._endpoint = endpoint
         else:
@@ -26,21 +49,21 @@ class HuggingfaceWrapper:
         self._token = token
         # init
         self.hf_api = HfApi(
-            endpoint=self._endpoint, 
-            token=self._token, # Token is not persisted on the machine.    
+            endpoint=self._endpoint,
+            token=self._token,  # Token is not persisted on the machine.
         )
         pass
-    
+
     def list_spaces(self, author: str) -> List[SpaceInfo]:
         # HfApi client api
         spaces = self.hf_api.list_spaces(author=author)
         return spaces
-    
+
     def create_space(
-        self, 
-        repo_id: str, 
-        src_folder: str, 
-        ignore_patterns: List[str] = IGNORE_PATTERNS
+        self,
+        repo_id: str,
+        src_folder: str,
+        ignore_patterns: List[str] = IGNORE_PATTERNS,
     ) -> RepoUrl:
         """
         Create a new space and upload a folder to it.
@@ -52,24 +75,23 @@ class HuggingfaceWrapper:
         """
         # HfApi client api
         try:
-            repo_url = self.hf_api.create_repo(repo_id=repo_id, repo_type="space", space_sdk="docker")
+            repo_url = self.hf_api.create_repo(
+                repo_id=repo_id, repo_type="space", space_sdk="docker"
+            )
         except Exception as e:
             raise HuggingfaceCreateRepoError(e)
         try:
             folder_url = self.hf_api.upload_folder(
-                repo_id=repo_id, 
-                repo_type="space", 
+                repo_id=repo_id,
+                repo_type="space",
                 folder_path=src_folder,
-                ignore_patterns=ignore_patterns
+                ignore_patterns=ignore_patterns,
             )
         except Exception as e:
             raise HuggingfaceUploadFolderError(e)
         return repo_url
 
-    def get_space(
-        self, 
-        repo_id:str
-    ) -> SpaceInfo:
+    def get_space(self, repo_id: str) -> SpaceInfo:
         """
         Retrieve space by repo_id.
         Params:
@@ -84,10 +106,10 @@ class HuggingfaceWrapper:
         return space_info
 
     def update_space(
-        self, 
-        repo_id:str, 
-        src_folder:str,
-        ignore_patterns: List[str] = IGNORE_PATTERNS
+        self,
+        repo_id: str,
+        src_folder: str,
+        ignore_patterns: List[str] = IGNORE_PATTERNS,
     ) -> RepoUrl:
         """
         TODO: Need further update.
@@ -100,26 +122,25 @@ class HuggingfaceWrapper:
         """
         try:
             folder_url = self.hf_api.upload_folder(
-                repo_id=repo_id, 
-                repo_type="space", 
+                repo_id=repo_id,
+                repo_type="space",
                 folder_path=src_folder,
-                ignore_patterns=ignore_patterns
+                ignore_patterns=ignore_patterns,
             )
         except Exception as e:
             raise HuggingfaceUploadFolderError(e)
         return folder_url
 
-    def delete_space(self, repo_id:str) -> None:
+    def delete_space(self, repo_id: str) -> None:
         """
         Delete space by repo_id.
         Params:
         repo_id (str): A namespace (user or an organization) and a repo name separated by a /.
         Returns:
         None
-        """        
+        """
         try:
             self.hf_api.delete_repo(repo_id=repo_id, repo_type="space")
         except Exception as e:
-            raise HuggingfaceDeleteRepoError(e) 
+            raise HuggingfaceDeleteRepoError(e)
         return None
-        

@@ -7,6 +7,7 @@ import yaml
 import inspect
 import importlib
 import dotenv
+import rich
 import requests
 from urllib.parse import urlparse
 import posixpath
@@ -16,7 +17,7 @@ from workcell.core.errors import (
     WorkcellConfigGenerateError,
     WorkcellImportStringFormatError,
     WorkcellParamsFormatError,
-    WorkcellParamsMissingError
+    WorkcellParamsMissingError,
 )
 
 # Load weanalyze global environment variables
@@ -31,6 +32,7 @@ LOCALHOST_NAME = os.getenv("WORKCELL_SERVER_NAME", "127.0.0.1")
 ########
 # Helper functions for file
 ########
+
 
 def safe_join(directory: str, path: str) -> str | None:
     """Safely join zero or more untrusted path components to a base directory to avoid escaping the base directory.
@@ -62,7 +64,7 @@ def get_local_server_without_check(
     server_port: int | None = None,
     ssl_keyfile: str | None = None,
     ssl_certfile: str | None = None,
-    ssl_keyfile_password: str | None = None,   
+    ssl_keyfile_password: str | None = None,
 ):
     """Get a local server endpoint for the provided Interface
     Parameters:
@@ -87,7 +89,7 @@ def get_local_server_without_check(
             )
         path_to_local_server = "https://{}:{}/".format(url_host_name, port)
     else:
-        path_to_local_server = "http://{}:{}/".format(url_host_name, port) 
+        path_to_local_server = "http://{}:{}/".format(url_host_name, port)
 
     return url_host_name, port, path_to_local_server
 
@@ -113,9 +115,7 @@ def validate_url(possible_url: str) -> bool:
 ########
 # Helper functions for workcell
 ########
-def name_to_title(
-    name: str
-) -> str:
+def name_to_title(name: str) -> str:
     """Converts a camelCase or snake_case name to title case."""
     # If camelCase -> convert to snake case
     name = re.sub("(.)([A-Z][a-z]+)", r"\1_\2", name)
@@ -124,11 +124,9 @@ def name_to_title(
     return name.replace("_", " ").strip().title()
 
 
-def format_workcell_entrypoint(
-    import_string: str
-) -> str:
+def format_workcell_entrypoint(import_string: str) -> str:
     """Format a workcell entrypoint from an string.
-    Args: 
+    Args:
         import_string, str, acceptable import_string:
             e.g. import_string = "app:hello_world"
             e.g. import_string = "hello_world.app:hello_world"
@@ -136,7 +134,7 @@ def format_workcell_entrypoint(
     Returns:
         workcell_entrypoint, str, standard workcell_entrypoint: app:{function_name}
             e.g. workcell_entrypoint = "app:hello_world"
-        
+
     """
     # import string validation
     if "/" in import_string:
@@ -145,7 +143,7 @@ def format_workcell_entrypoint(
         raise WorkcellImportStringFormatError(import_string)
     if ":" not in import_string:
         raise WorkcellImportStringFormatError(import_string)
-    
+
     # extract loader_path and function_name, import_string = "project_folder.app:function_name"
     loader_path = import_string.split(":")[0]
     function_name = import_string.split(":")[1]
@@ -155,11 +153,9 @@ def format_workcell_entrypoint(
     return workcell_entrypoint
 
 
-def valid_workcell_import_string(
-    import_string: str
-) -> bool:
+def valid_workcell_import_string(import_string: str) -> bool:
     """Valid a function exists in app.py.
-    Args: 
+    Args:
         import_string, str, acceptable import_string:
             e.g. import_string = "app:hello_world"
             e.g. import_string = "hello_world.app:hello_world"
@@ -167,141 +163,130 @@ def valid_workcell_import_string(
 
     Returns:
         is_valid, bool, True if function exists in app.py, False if not.
-        
+
     """
     # format workcell_entrypoint
-    workcell_entrypoint = format_workcell_entrypoint(
-        import_string
-    )
+    workcell_entrypoint = format_workcell_entrypoint(import_string)
     # split workcell_entrypoint
-    function_file, function_name = \
-        workcell_entrypoint.split(":")[0].split('.')[-1], \
-        workcell_entrypoint.split(":")[1]
+    function_file, function_name = (
+        workcell_entrypoint.split(":")[0].split(".")[-1],
+        workcell_entrypoint.split(":")[1],
+    )
     # check function exists in app.py
     spec = importlib.import_module(function_file, os.getcwd())
-    if (hasattr(spec, function_name) and \
-        inspect.isfunction(getattr(spec, function_name))):
+    if hasattr(spec, function_name) and inspect.isfunction(
+        getattr(spec, function_name)
+    ):
         return True
     else:
-        return False 
+        return False
 
 
-def valid_workcell_subdomain(
-    workcell_id: str
-) -> str:
-    """Prepare template folder for workcell.
-    This will create a folder and package template in build_path.
+def gen_provider_config(
+    import_string: str,
+    provider_name: str = "huggingface",
+) -> Dict:
+    """Prepare provider config for workcell.
+    This will create a provider config dict.
     Args:
-        workcell_id (str): universal cross-infra workcell_id.
-            e.g. workcell_id = "jiandong/hello_workcell"
-
+        import_string (str): import string / workcell name.
+            e.g. import_string = "app:hello_workcell"
+        provider_name (str): workcell provider.
+            e.g. provider_name = "huggingface"
     Return:
-        workcell_subdomain (str): universal cross-infra workcell_subdomain.   
-            e.g. workcell_subdomain = jiandong-hello-workcell
+        provider (dict): provider config dict.
     """
-    workcell_subdomain = "-".join(workcell_id.replace("_","-").split('/'))
-    return workcell_subdomain
+    entrypoint = format_workcell_entrypoint(
+        import_string
+    )  # format workcell_entrypoint from import_string
+    name = entrypoint.split(":")[-1]  # a.k.a function_name, "hello_workcell"
+    if provider_name == "huggingface":
+        if os.environ.get("HUGGINGFACE_USERNAME"):
+            repo_id = "{}/{}".format(os.environ.get("HUGGINGFACE_USERNAME"), name)
+            provider = {
+                "name": "huggingface",
+                "repository": repo_id,
+                "branch": "main",  # TODO: from user input
+            }
+        else:
+            # if there is no `HUGGINGFACE_USERNAME` set, we will set to None and move on, until user pack it.
+            provider = {"name": "huggingface", "repository": "", "branch": ""}
+    else:
+        # TODO:
+        provider = {"name": "weanalyze"}
+    return provider
 
 
 def gen_workcell_config(
     import_string: str,
-    image_uri:  str="",
-    workcell_provider: str="huggingface",
-    workcell_version: str="latest",
-    workcell_runtime: str="python3.8", 
-    workcell_tags: str="{}",
-    workcell_envs: str="{}"
+    provider_name: str = "huggingface",
+    version: str = "latest",
+    runtime: str = "python3.8",
+    tags: str = "{}",
+    envs: str = "{}",
 ) -> Dict:
     """Prepare template folder for workcell.
     This will create a folder and package template in build_path.
     Args:
-        import_string (str): import string / workcell fqdn.
+        import_string (str): import string / workcell name.
             e.g. import_string = "app:hello_workcell"
-        image_uri (str): docker image uri.
-            e.g. image_uri = "weanalyze/hello_workcell:latest"        
-        workcell_provider (str): workcell provider.
-            e.g. workcell_provider = "localhost", "huggingface"          
-        workcell_version (str): workcell version.
-            e.g. workcell_version = "latest"
-        workcell_runtime (str): workcell runtime.
-            e.g. workcell_runtime = "python3.8" 
-        workcell_tags (dict): workcell tags.
-            e.g. workcell_tags = '{"vendor":"aws", "service-type":"http"}'
-        workcell_envs (dict): workcell env.
-            e.g. workcell_envs = '{"STAGE":"latest"}'
+        provider_name (str): workcell provider.
+            e.g. provider_name = "huggingface"
+        version (str): workcell version.
+            e.g. version = "latest"
+        runtime (str): workcell runtime.
+            e.g. runtime = "python3.8"
+        tags (dict): workcell tags.
+            e.g. tags = '{"vendor":"aws", "service-type":"http"}'
+        envs (dict): workcell env.
+            e.g. envs = '{"STAGE":"latest"}'
 
     Return:
         workcell_config (dict): build config for workcell.
     """
     # transparent workcell_config
     try:
-        workcell_entrypoint = format_workcell_entrypoint(import_string) # format workcell_entrypoint from import_string
-        workcell_name = workcell_entrypoint.split(":")[-1] # a.k.a function_name, "hello_workcell" 
-        workcell_version = workcell_version # "latest" | "v1.0.0" | "dev" | "prod"
-        workcell_runtime = workcell_runtime # "python3.8" | "python3.9" | "nodejs14.x" | "nodejs12.x"
+        entrypoint = format_workcell_entrypoint(
+            import_string
+        )  # format workcell_entrypoint from import_string
+        name = entrypoint.split(":")[-1]  # a.k.a function_name, "hello_workcell"
+        version = version  # "latest" | "v1.0.0" | "dev" | "prod"
+        runtime = runtime  # "python3.8" | "python3.9" | "nodejs14.x" | "nodejs12.x"
     except Exception as e:
         raise WorkcellConfigGenerateError(e)
-    
-    # workcell_id
-    if workcell_provider == "localhost":
-        workcell_id = "{}/{}".format("localhost", workcell_name)
-    elif workcell_provider == "huggingface":
-        if os.environ.get('HUGGINGFACE_USERNAME'):
-            workcell_id = "{}/{}".format(os.environ.get('HUGGINGFACE_USERNAME'), workcell_name)
-        else:
-            raise WorkcellParamsFormatError(msg=workcell_provider)
-    elif workcell_provider == "weanalyze":
-        if os.environ.get('WEANALYZE_USERNAME'):
-            workcell_id = "{}/{}".format(os.environ.get('WEANALYZE_USERNAME'), workcell_name)
-        else:
-            raise WorkcellParamsFormatError(msg=workcell_provider)
-    else:
-        raise WorkcellParamsFormatError(msg=workcell_provider)
-    
-    # workcell_code
-    try:
-        # TODO: add Docker Hub username support
-        if image_uri == "" and os.getenv("DOCKERHUB_USERNAME"):
-            # default build tag: {dockerhub_username}/{workcell_name}:{workcell_version}
-            image_uri = "{}/{}:{}".format(os.getenv("DOCKERHUB_USERNAME"), workcell_name, workcell_version)
-        # ready to deploy
-        workcell_code = {
-            "ImageUri": image_uri
-        }
-    except:
-        raise WorkcellParamsFormatError(msg="workcell_id")
 
-    # workcell_tags
+    # workcell provider, wrap into dict
     try:
-        workcell_tags = ast.literal_eval(workcell_tags) # useful tags
-    except:
-        raise WorkcellParamsFormatError(workcell_tags)
+        provider = gen_provider_config(import_string, provider_name)
+    except Exception as e:
+        raise WorkcellParamsFormatError(msg=provider_name)
 
-    # workcell_envs
+    # workcell tags
     try:
-        workcell_envs= ast.literal_eval(workcell_envs) # useful tags
+        tags = ast.literal_eval(tags)  # useful tags
     except:
-        raise WorkcellParamsFormatError(workcell_envs)
-    
+        raise WorkcellParamsFormatError(tags)
+
+    # workcell envs
+    try:
+        envs = ast.literal_eval(envs)  # useful tags
+    except:
+        raise WorkcellParamsFormatError(envs)
+
     # pack config
     workcell_config = {
-        "workcell_name": workcell_name, 
-        "workcell_provider": workcell_provider,   
-        "workcell_id": workcell_id,              
-        "workcell_version": workcell_version, 
-        "workcell_runtime": workcell_runtime, 
-        "workcell_entrypoint": workcell_entrypoint, 
-        "workcell_code": workcell_code,
-        "workcell_tags": workcell_tags, 
-        "workcell_envs": workcell_envs,
-    } 
+        "name": name,
+        "provider": provider,
+        "version": version,
+        "runtime": runtime,
+        "entrypoint": entrypoint,
+        "tags": tags,
+        "envs": envs,
+    }
     return workcell_config
 
 
-def save_workcell_config(
-    workcell_config: dict, 
-    dest: str
-) -> None:
+def save_workcell_config(workcell_config: dict, dest: str) -> None:
     """Save workcell config to a YAML file.
     Args:
         workcell_config (dict): build config for workcell.
@@ -310,7 +295,7 @@ def save_workcell_config(
     Returns:
         None
     """
-    with open(dest, 'w') as f:
+    with open(dest, "w") as f:
         yaml.dump(workcell_config, f, default_flow_style=False, sort_keys=False)
     return None
 
@@ -327,7 +312,7 @@ def load_workcell_config(
     """
     with open(src) as f:
         # use safe_load instead load
-        workcell_config = yaml.safe_load(f) 
+        workcell_config = yaml.safe_load(f)
     return workcell_config
 
 

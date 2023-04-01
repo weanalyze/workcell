@@ -6,4 +6,4 @@ class ExportFormat(str, Enum):
     WE = "we"
     PEX = "pex"
     ZIP = "zip"
-    PYZ = "pyz" # https://github.com/ClericPy/zipapps
+    PYZ = "pyz"  # https://github.com/ClericPy/zipapps
