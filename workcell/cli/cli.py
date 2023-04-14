@@ -108,7 +108,7 @@ def new(
 
 @cli.command()
 def serve(
-    workcell_entrypoint: str,
+    entrypoint: str,
     config_path: Path = typer.Option(
         None, "--config", "-c", callback=conf_callback, is_eager=True
     ),
@@ -121,8 +121,13 @@ def serve(
     if config_path:
         workcell_config = yaml.load(config_path.read_text(), Loader=yaml.Loader)
         launch_app(fn=workcell_config, host=host, port=port)
+    elif entrypoint:
+        launch_app(fn=entrypoint, host=host, port=port)
     else:
-        launch_app(fn=workcell_entrypoint, host=host, port=port)
+        typer.secho(
+            f"One of `entrypoint` and `config_path` arg must be set! ", fg=typer.colors.RED, err=True
+        )
+        return None
 
 
 @cli.command()
@@ -218,7 +223,6 @@ def pack(
             err=True,
         )
         return None
-
     # generate workcell_config
     workcell_config = gen_workcell_config(
         import_string=import_string,
